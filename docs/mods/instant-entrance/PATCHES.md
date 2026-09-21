@@ -1,4 +1,4 @@
-# 패치 등록 — 0.1.0
+# 패치 등록 — 0.1.1 (0.1.0 과 같은 대상·처리기, 등록만 Restitutor.Core HookSet 경유)
 
 소스: [EntryPoint.cs](../../../InstantEntrance/src/EntryPoint.cs)
 

@@ -1,11 +1,12 @@
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using Il2CppClient.WorldLogic.Entity.Component.PortNote;
 using Il2CppClient.WorldLogic.Map.GOComponent;
 using HarmonyLib;
 using MelonLoader;
+using Restitutor.Core;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(Restitutor.InstantEntrance.EntryPoint), "Restitutor fixes Instant Entrance", "0.1.0", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.InstantEntrance.EntryPoint), "Restitutor fixes Instant Entrance", "0.1.1", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 
 namespace Restitutor.InstantEntrance;
@@ -21,28 +22,26 @@ public sealed class EntryPoint : MelonMod
     public override void OnInitializeMelon()
     {
         log = LoggerInstance;
-        try
-        {
-            HarmonyInstance.Patch(Required(typeof(MapHarbourEnterCtrl), "Start", Type.EmptyTypes),
-                postfix: Handler(nameof(ReadyAfterStart)));
-            HarmonyInstance.Patch(Required(typeof(EntityPortNoteAnimator), "PlayEnterAnimation", Type.EmptyTypes),
-                prefix: Handler(nameof(BeginEntry)), finalizer: Handler(nameof(EndEntry)));
-            HarmonyInstance.Patch(Required(typeof(Animator), "Play", new[] { typeof(string), typeof(int), typeof(float) }),
-                prefix: Handler(nameof(CompleteEntryAnimation)));
-            log.Msg("0.1.0: port-note entry animation and initial 2.5-second harbour gate patched. Native entry checks retained; runtime validation pending.");
-        }
-        catch (Exception ex)
-        {
-            HarmonyInstance.UnpatchSelf();
-            log.Error("Installation failed; Instant Entrance hooks removed: " + ex);
-        }
+        // Everything that touches Restitutor.Core sits in Install(): if Restitutor.Core.dll is
+        // missing from UserLibs, the failure surfaces here and only this mod stays disabled.
+        try { Install(); }
+        catch (FileNotFoundException ex) when (ex.FileName?.StartsWith("Restitutor.Core", StringComparison.Ordinal) == true)
+        { log.Error("Restitutor.Core.dll is missing from UserLibs; Instant Entrance stays disabled."); }
     }
 
-    private static MethodInfo Required(Type type, string name, Type[] args) =>
-        type.GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly,
-            null, args, null) ?? throw new MissingMethodException(type.FullName, name);
-    private static HarmonyMethod Handler(string name) => new(typeof(EntryPoint).GetMethod(name,
-        BindingFlags.NonPublic | BindingFlags.Static)!);
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void Install()
+    {
+        if (!CoreInfo.Require(log, "0.1.0")) return;
+        var hooks = new HookSet(HarmonyInstance, typeof(EntryPoint));
+        if (hooks.InstallAll(log, "Instant Entrance install", () =>
+            {
+                hooks.Hook(typeof(MapHarbourEnterCtrl), "Start", postfix: nameof(ReadyAfterStart), args: Type.EmptyTypes);
+                hooks.Hook(typeof(EntityPortNoteAnimator), "PlayEnterAnimation", prefix: nameof(BeginEntry), finalizer: nameof(EndEntry), args: Type.EmptyTypes);
+                hooks.Hook(typeof(Animator), "Play", prefix: nameof(CompleteEntryAnimation), args: new[] { typeof(string), typeof(int), typeof(float) });
+            }))
+            log.Msg("0.1.1 (Restitutor.Core " + CoreInfo.Version + "): port-note entry animation and initial 2.5-second harbour gate patched. Native entry checks retained.");
+    }
 
     private static void ReadyAfterStart(MapHarbourEnterCtrl __instance)
     {
