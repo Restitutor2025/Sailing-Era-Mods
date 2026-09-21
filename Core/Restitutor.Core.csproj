@@ -1,10 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <AssemblyName>Restitutor_fixes_Instant_Entrance</AssemblyName>
-    <Version>0.1.1</Version>
+    <AssemblyName>Restitutor.Core</AssemblyName>
+    <RootNamespace>Restitutor.Core</RootNamespace>
+    <!-- AssemblyVersion stays 1.0.0.0 forever so a newer Core always satisfies mods built against an older one.
+         The real version is CoreInfo.Version (a property, so it is read at run time, not copied into mods). -->
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <InformationalVersion>0.1.0</InformationalVersion>
+    <Version>0.1.0</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GameDir>E:\Program\steam\steamapps\common\Sailing Era</GameDir>
   </PropertyGroup>
@@ -14,10 +22,7 @@
     <Reference Include="0Harmony"><HintPath>$(GameDir)\MelonLoader\net6\0Harmony.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Il2CppInterop.Runtime"><HintPath>$(GameDir)\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Assembly-CSharp"><HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Il2Cppmscorlib"><HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityEngine.AnimationModule"><HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\UnityEngine.AnimationModule.dll</HintPath><Private>false</Private></Reference></ItemGroup>
-  <!-- Restitutor.Core ships separately in UserLibs; never copy it next to the mod. -->
-  <ItemGroup><ProjectReference Include="..\Core\Restitutor.Core.csproj"><Private>false</Private></ProjectReference></ItemGroup>
+    <Reference Include="Il2Cppmscorlib"><HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
 </Project>
-

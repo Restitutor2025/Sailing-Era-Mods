@@ -219,3 +219,19 @@
 
 # Install script
 !/install-2026-09-22-perf.ps1
+
+# Restitutor.Core (shared library, installed to UserLibs)
+!/Core/
+/Core/*
+!/Core/*.csproj
+!/Core/*.md
+!/Core/src/
+/Core/src/*
+!/Core/src/*.cs
+!/Core/tests/
+/Core/tests/*
+!/Core/tests/*.cs
+!/Core/tests/*.csproj
+!/install-core-0.1.0.ps1
+!/install-core-0.1.0.bat
+!/push-core-0.1.0.bat
