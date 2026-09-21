@@ -1,7 +1,8 @@
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Il2CppCnControls;
 using MelonLoader;
+using Restitutor.Core;
 using Il2CppClient.Const;
 using Il2CppClient.Manager;
 using Il2CppClient.UILogic.UISailing;
@@ -13,7 +14,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using SceneManager = Il2CppCore.SceneSystem.SceneManager;
 
-[assembly: MelonInfo(typeof(Restitutor.CTRLInstant.EntryPoint), "Restitutor BugFixes CTRL Instant", "0.1.6", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.CTRLInstant.EntryPoint), "Restitutor BugFixes CTRL Instant", "0.1.7", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 
 namespace Restitutor.CTRLInstant;
@@ -38,28 +39,30 @@ public sealed class EntryPoint : MelonMod
     public override void OnInitializeMelon()
     {
         log = LoggerInstance;
-        try
-        {
-            Hook(typeof(UISailInputAgent), "OnFeatureInputActionStart", after: nameof(Started));
-            Hook(typeof(UISailInputAgent), "OnFeatureInputActionPerform", before: nameof(Performed));
-            Hook(typeof(UISailInputAgent), "OnFeatureInputActionEnd", final: nameof(Ended));
-            Hook(typeof(UISailingCtrl), "CloseHook", before: nameof(Closing));
-            Hook(typeof(UISailingCtrl), "DisposeHook", before: nameof(Closing));
-            Hook(typeof(OceanSceneSailingState), "Exit", before: nameof(Leaving));
-            Hook(typeof(GameManager), "ForceReset", after: nameof(Reset));
-            enabled = true;
-            log.Msg("0.1.6: CTRL pauses sailing instantly; the fleet interaction window keeps the pause. Diagnostics removed.");
-        }
-        catch (Exception ex) { HarmonyInstance.UnpatchSelf(); Error(ex); }
+        // Everything that touches Restitutor.Core sits in Install(): without Restitutor.Core.dll in
+        // UserLibs the failure surfaces here and only this mod stays disabled.
+        try { Install(); }
+        catch (FileNotFoundException ex) when (ex.FileName?.StartsWith("Restitutor.Core", StringComparison.Ordinal) == true)
+        { log.Error("Restitutor.Core.dll is missing from UserLibs; CTRL Instant stays disabled."); }
     }
 
-    private void Hook(Type type, string method, string? before = null, string? after = null, string? final = null)
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void Install()
     {
-        var target = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
-                                    BindingFlags.Static | BindingFlags.DeclaredOnly).Single(m => m.Name == method);
-        HarmonyMethod? H(string? name) => name == null ? null : new HarmonyMethod(typeof(EntryPoint).GetMethod(name,
-            BindingFlags.NonPublic | BindingFlags.Static)!);
-        HarmonyInstance.Patch(target, prefix: H(before), postfix: H(after), finalizer: H(final));
+        if (!CoreInfo.Require(log, "0.1.0")) return;
+        var hooks = new HookSet(HarmonyInstance, typeof(EntryPoint));
+        if (!hooks.InstallAll(log, "CTRL Instant install", () =>
+            {
+                hooks.Hook(typeof(UISailInputAgent), "OnFeatureInputActionStart", postfix: nameof(Started));
+                hooks.Hook(typeof(UISailInputAgent), "OnFeatureInputActionPerform", prefix: nameof(Performed));
+                hooks.Hook(typeof(UISailInputAgent), "OnFeatureInputActionEnd", finalizer: nameof(Ended));
+                hooks.Hook(typeof(UISailingCtrl), "CloseHook", prefix: nameof(Closing));
+                hooks.Hook(typeof(UISailingCtrl), "DisposeHook", prefix: nameof(Closing));
+                hooks.Hook(typeof(OceanSceneSailingState), "Exit", prefix: nameof(Leaving));
+                hooks.Hook(typeof(GameManager), "ForceReset", postfix: nameof(Reset));
+            })) return;
+        enabled = true;
+        log.Msg("0.1.7 (Restitutor.Core " + CoreInfo.Version + "): CTRL pauses sailing instantly; the fleet interaction window keeps the pause.");
     }
 
     private static OceanScene? Sailing()
