@@ -49,7 +49,7 @@ public sealed partial class EntryPoint
         Patch(typeof(UICharacterView), "RefreshTipsSkill", new[]{typeof(PlayerRoleData)}, nameof(BookNativeTips));
         Patch(typeof(UICharacterView), "RenderListBtnSkill", new[] { typeof(int), typeof(GObject) }, nameof(BookRenderBefore), nameof(BookRenderAfter));
         Patch(typeof(UICharacterCtrl), "OnClickBtnBook", Type.EmptyTypes, nameof(BookUse));
-        Patch(typeof(InputSystemManager), "OnEventCaptureInput", new[] { typeof(InputAction.CallbackContext) }, nameof(BookCapture));
+        InputHandler(BookCapture); // 0.6.12: shared Core input gate (was a prefix on InputSystemManager.OnEventCaptureInput)
         Patch(typeof(GameManager), "ForceReset", Type.EmptyTypes, nameof(ResetBooks));
         Patch(typeof(Il2CppClient.UILogic.UITips.UITipsCtrl), "ShowBaseTips", new[]{typeof(string),typeof(string)}, nameof(BookTips),nameof(BookTipsAfter));
     }
