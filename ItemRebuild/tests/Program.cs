@@ -22,6 +22,10 @@ public sealed partial class EntryPoint
  {
   MelonEnvironment.UserDataDirectory=Path.Combine(AppContext.BaseDirectory,"test-userdata",DateTime.UtcNow.Ticks.ToString());
   enabled=true;thread=Environment.CurrentManagedThreadId;log=new();runtime=new();
+  // 0.1.23: registration goes through Restitutor.Core; the game counts as ready (first scene-entered frame).
+  runtime.hooks=new Restitutor.Core.HookSet(runtime.HarmonyInstance,typeof(EntryPoint));
+  Il2CppCore.SceneSystem.SceneManager.Instance=new();MelonLoader.MelonEvents.OnUpdate.Invoke();
+  Check(Restitutor.Core.GameReady.IsReady,"Core game-ready gate open for deferred UIManager hook");
   using(var historical=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"saved-items.json"))))
   {
    var xs=historical.RootElement.EnumerateArray().Select(e=>new PlayerItemData {

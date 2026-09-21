@@ -1,12 +1,15 @@
 // Offline test doubles. No game/Unity/MelonLoader assembly is loaded by this executable.
 namespace HarmonyLib {
  public class HarmonyMethod { public HarmonyMethod(System.Reflection.MethodInfo x){} }
- public class Harmony { public static int Registrations; public void UnpatchSelf(){} public void Patch(System.Reflection.MethodInfo m,HarmonyMethod? p,HarmonyMethod? q,HarmonyMethod? finalizer){Registrations++;} }
+ public class Harmony { public static int Registrations; public void UnpatchSelf(){} public System.Reflection.MethodInfo? Patch(System.Reflection.MethodBase m,HarmonyMethod? p=null,HarmonyMethod? q=null,HarmonyMethod? transpiler=null,HarmonyMethod? finalizer=null){Registrations++;return null;} }
 }
 namespace MelonLoader {
  public class MelonInfoAttribute:Attribute { public MelonInfoAttribute(Type t,string n,string v,string a){} }
  public class MelonGameAttribute:Attribute { public MelonGameAttribute(string d,string n){} }
- public class MelonLogger { public class Instance { public void Msg(string s){} public void Error(string s){} } }
+ public class MelonLogger { public class Instance { public Instance(){} public Instance(string name){} public void Msg(string s){} public void Error(string s){} } }
+ public delegate void LemonAction();
+ public class MelonEvent { readonly List<LemonAction> subs=new(); public void Subscribe(LemonAction a,int priority=0,bool unsubscribeOnFirstInvocation=false){if(!subs.Contains(a))subs.Add(a);} public void Unsubscribe(LemonAction a)=>subs.Remove(a); public void Invoke(){foreach(var a in subs.ToArray())a();} }
+ public static class MelonEvents { public static readonly MelonEvent OnUpdate=new(); }
  public class MelonMod { public MelonLogger.Instance LoggerInstance=new(); public HarmonyLib.Harmony HarmonyInstance=new(); public virtual void OnInitializeMelon(){} public virtual void OnUpdate(){} }
 }
 namespace MelonLoader.Utils { public static class MelonEnvironment { public static string GameRootDirectory="."; public static string UserDataDirectory="."; } }
@@ -126,3 +129,4 @@ namespace Il2CppUILandExplore {
 }
 
 namespace Il2CppUILandExplore {public class UIcompLandExplore:Il2CppFairyGUI.GComponent {public UIButtonItem BtnSupply=new();}}
+namespace Il2CppCore.SceneSystem { public class SceneManager { public static SceneManager? Instance; public bool IsSceneEntered=>true; } }
