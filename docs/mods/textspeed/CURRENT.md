@@ -1,3 +1,8 @@
+# Text Speed — 0.1.6 (Restitutor.Core 전환, 기능 변경 없음, 게임 확인 전)
+[0.1.6](0.1.6.md). 필요: `UserLibs\Restitutor.Core.dll` 0.1.0 이상.
+
+이전 기록:
+
 # Text Speed 0.1.5 — 매 프레임 LINQ 제거(기능 동일)
 
 게임 확인 전. [상세](0.1.5.md)
