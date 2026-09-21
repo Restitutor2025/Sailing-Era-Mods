@@ -1,0 +1,33 @@
+# Allowlist: everything is ignored unless re-included below. Game-extracted data
+# (analysis/, GameAssembly copies, dumps), build output and release DLLs stay out.
+# Add one block per mod when it joins the repo.
+/*
+!/.gitignore
+
+# Moved-to-editor-repo notices
+!/CityEditor/
+/CityEditor/*
+!/CityEditor/README.md
+!/CityEditorCore/
+/CityEditorCore/*
+!/CityEditorCore/README.md
+
+# Stat Rank
+!/StatRank/
+/StatRank/*
+!/StatRank/build.ps1
+!/StatRank/*.csproj
+!/StatRank/src/
+/StatRank/src/*
+!/StatRank/src/*.cs
+!/StatRank/tests/
+/StatRank/tests/*
+!/StatRank/tests/*.cs
+!/StatRank/tests/*.csproj
+
+# Docs (per mod)
+!/docs/
+/docs/*
+!/docs/mods/
+/docs/mods/*
+!/docs/mods/stat-rank/
