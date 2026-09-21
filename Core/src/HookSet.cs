@@ -18,6 +18,7 @@ public sealed class HookSet
 
     private readonly HarmonyLib.Harmony harmony;
     private readonly Type handlers;
+    private readonly List<IDisposable> inputs = new();
 
     public HookSet(HarmonyLib.Harmony harmony, Type handlers)
     {
@@ -42,6 +43,20 @@ public sealed class HookSet
         return original;
     }
 
+    /// <summary>0.2.0: registers this mod's input handler on the shared <see cref="InputGate"/>
+    /// (replaces a bool prefix on InputSystemManager.OnEventCaptureInput). Removed by <see cref="RemoveAll"/>.</summary>
+    public void Input(string owner, Func<UnityEngine.InputSystem.InputAction.CallbackContext, bool> allow)
+        => inputs.Add(InputGate.Register(owner, allow));
+
+    /// <summary>0.2.0: removes every hook of this mod's Harmony instance and its input handlers.
+    /// Use instead of HarmonyInstance.UnpatchSelf() once a mod registers input handlers.</summary>
+    public void RemoveAll()
+    {
+        foreach (var r in inputs) r.Dispose();
+        inputs.Clear();
+        harmony.UnpatchSelf();
+    }
+
     /// <summary>All-or-nothing install for OnInitializeMelon: on any exception every hook of this
     /// mod's Harmony instance is removed and one error is logged. Returns true on success.</summary>
     public bool InstallAll(MelonLogger.Instance log, string what, Action body)
@@ -49,7 +64,7 @@ public sealed class HookSet
         try { body(); return true; }
         catch (Exception ex)
         {
-            try { harmony.UnpatchSelf(); } catch (Exception un) { log.Error("Unpatch after failed install: " + un); }
+            try { RemoveAll(); } catch (Exception un) { log.Error("Unpatch after failed install: " + un); }
             log.Error(what + " failed; all hooks of this mod removed: " + ex);
             return false;
         }
