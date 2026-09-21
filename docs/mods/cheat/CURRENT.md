@@ -1,3 +1,7 @@
+# Cheats Interface 1.6.0 + Skill 1.0.5 — Restitutor.Core 전환(공용 입력 게이트), 기능 변경 없음
+
+게임 확인 전. 필요 Core 0.2.0. [상세](1.6.0.md)
+
 # Cheats Interface 1.5.1 + Battle 1.0.1 — 매 프레임 재그리기·조회 줄이기(기능 동일)
 
 게임 확인 전. [상세](1.5.1.md)
