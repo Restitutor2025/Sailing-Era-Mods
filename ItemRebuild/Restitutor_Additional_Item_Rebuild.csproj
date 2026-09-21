@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>Restitutor_Additional_Item_Rebuild</AssemblyName>
-    <Version>0.1.22</Version>
+    <Version>0.1.23</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -18,5 +18,6 @@
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
+  <!-- Restitutor.Core ships separately in UserLibs; never copy it next to the mod. -->
+  <ItemGroup><ProjectReference Include="..\Core\Restitutor.Core.csproj"><Private>false</Private></ProjectReference></ItemGroup>
 </Project>
-

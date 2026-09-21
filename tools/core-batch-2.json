@@ -1,0 +1,13 @@
+{"name":"core-batch-2","branch":"refactor/core-batch-2",
+ "desc":"install Text Speed 0.1.6, CTRL Instant 0.1.7, Item Rebuild 0.1.23 (all on Restitutor.Core, behaviour unchanged), then commit and push.",
+ "rollback":"TextSpeed\\releases\\0.1.5, CTRLInstant\\releases\\0.1.6, ItemRebuild\\releases\\0.1.22 over the installed files.",
+ "requires_merged":"refactor/core-batch-1",
+ "installs":[
+  ["TextSpeed\\releases\\0.1.6\\Restitutor_fixes_textspeed.dll","Mods\\Additional_Functions\\Restitutor_Additional_Textspeed.dll","3AEF807822EAFF01C1799AE65CD44B71B95A7339C757D263A0A1AA530F7010B6"],
+  ["CTRLInstant\\releases\\0.1.7\\Restitutor_BugFixes_CTRL_Instant.dll","Mods\\Bug_Fixes\\Restitutor_BugFixes_CTRL_Instant.dll","66D038C7590D8E364B8D89E0C267E5A927D6B992A050267CF943365EF6023D31"],
+  ["ItemRebuild\\releases\\0.1.23\\Restitutor_Additional_Item_Rebuild.dll","Mods\\Additional_Functions\\Restitutor_Additional_Item_Rebuild.dll","7766E3DAF8E859558BA717AE8AE292571CA13A33D8C6E505F461E198F0787BCD"]],
+ "commits":[
+  [["TextSpeed","docs/mods/textspeed"],"refactor(textspeed): register hooks through Restitutor.Core (0.1.6)","Same seven hooks and order on the same Harmony id; two HookSets (OptionsRow, TextSpeedModule). Requires Restitutor.Core 0.1.0."],
+  [["CTRLInstant","docs/mods/ctrl-instant"],"refactor(ctrl-instant): register hooks through Restitutor.Core (0.1.7)","Same seven hooks, handlers and order. Requires Restitutor.Core 0.1.0."],
+  [["ItemRebuild","docs/mods/item-rebuild"],"refactor(item-rebuild): register hooks through Restitutor.Core (0.1.23)","Same 48 install-time hooks and the lazy UIManager.ShowInputNumPromptBox hook; lookup rules, handlers and order unchanged. Tests compile Core; 5676 checks pass. Requires Restitutor.Core 0.1.0."],
+  [["docs/mods/devil-fruits",".gitignore","tools","core-batch-2.ps1","core-batch-2.bat"],"chore: Core batch 2 script, oneshot generator; note withdrawn Devil Fruits 0.1.4",""]]}

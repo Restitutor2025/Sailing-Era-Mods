@@ -237,3 +237,7 @@
 !/push-core-0.1.0.bat
 !/core-batch-*.ps1
 !/core-batch-*.bat
+!/tools/
+/tools/*
+!/tools/*.py
+!/tools/*.json

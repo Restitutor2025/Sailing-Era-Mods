@@ -1,10 +1,11 @@
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Il2CppClient.UILogic.UIDialog;
 using Il2CppClient.UILogic.UISystemSetting;
 using Il2CppClient.Utils;
 using MelonLoader;
 using MelonLoader.Utils;
+using Restitutor.Core;
 
 namespace Restitutor.TextSpeed;
 
@@ -30,28 +31,32 @@ public static class TextSpeedModule
         Store = new ModeStore(Path.Combine(MelonEnvironment.UserDataDirectory,"Restitutor","textspeed.v1.json"));
         if (!Store.Ready) Log.Error("Text speed disabled: " + Store.Error);
         harmony = new HarmonyLib.Harmony(HarmonyId);
-        try
-        {
-            Hook(typeof(UISettingView), "OnVideoSettingItemRender", typeof(OptionsRow), nameof(OptionsRow.BeforeRender), nameof(OptionsRow.AfterRender));
-            Hook(typeof(UIDialogView), "OnInit", typeof(TextSpeedModule), null, nameof(RegisterDialog));
-            // ShowHook replaces all five effects before it calls StartEffect.
-            Hook(typeof(UIDialogView), "StartEffect", typeof(TextSpeedModule), nameof(RegisterDialog), null);
-            Hook(typeof(UIDialogView), "HideHook", typeof(TextSpeedModule), null, nameof(ReleaseDialog));
-            Hook(typeof(TypingEffectObject), "Start", typeof(TextSpeedModule), null, nameof(AfterStart));
-            // 0.1.4: Instant mode, CTRL not held: next line 3 s after the line is complete (auto on or off).
-            Hook(typeof(UIDialogView), "EndTyping", typeof(TextSpeedModule), nameof(BeforeEndTyping), nameof(AfterEndTyping));
-            // Any native continue (click, key, CTRL press with auto off) ends the wait: no double advance.
-            Hook(typeof(UIDialogCtrl), "OnAction_ContinueTalk", typeof(TextSpeedModule), nameof(BeforeContinueTalk), null);
-            Log.Msg($"Ready. Saved mode={Store.Current}; settings={Path.Combine(MelonEnvironment.UserDataDirectory,"Restitutor","textspeed.v1.json")}");
-        }
-        catch(Exception ex) { harmony.UnpatchSelf(); failed=true; Log.Error("Install failed: "+ex); }
+        // Everything that touches Restitutor.Core sits in Install(): without Restitutor.Core.dll in
+        // UserLibs the failure surfaces here and only this mod stays disabled.
+        try { Install(harmony); }
+        catch (FileNotFoundException ex) when (ex.FileName?.StartsWith("Restitutor.Core", StringComparison.Ordinal) == true)
+        { failed = true; Log.Error("Restitutor.Core.dll is missing from UserLibs; text speed stays disabled."); }
     }
-    private static void Hook(Type type,string method,Type handlers,string? before,string? after)
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void Install(HarmonyLib.Harmony h)
     {
-        var ms=type.GetMethods(BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.DeclaredOnly).Where(m=>m.Name==method).ToArray();
-        if(ms.Length!=1)throw new AmbiguousMatchException(type.FullName+"."+method);
-        HarmonyMethod? H(string? n)=>n==null?null:new HarmonyMethod(handlers.GetMethod(n,BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic)!);
-        harmony!.Patch(ms[0],prefix:H(before),postfix:H(after));
+        if (!CoreInfo.Require(Log, "0.1.0")) { failed = true; return; }
+        var own = new HookSet(h, typeof(TextSpeedModule));
+        var row = new HookSet(h, typeof(OptionsRow));
+        if (!own.InstallAll(Log, "Install", () =>
+            {
+                row.Hook(typeof(UISettingView), "OnVideoSettingItemRender", prefix: nameof(OptionsRow.BeforeRender), postfix: nameof(OptionsRow.AfterRender));
+                own.Hook(typeof(UIDialogView), "OnInit", postfix: nameof(RegisterDialog));
+                // ShowHook replaces all five effects before it calls StartEffect.
+                own.Hook(typeof(UIDialogView), "StartEffect", prefix: nameof(RegisterDialog));
+                own.Hook(typeof(UIDialogView), "HideHook", postfix: nameof(ReleaseDialog));
+                own.Hook(typeof(TypingEffectObject), "Start", postfix: nameof(AfterStart));
+                // 0.1.4: Instant mode, CTRL not held: next line 3 s after the line is complete (auto on or off).
+                own.Hook(typeof(UIDialogView), "EndTyping", prefix: nameof(BeforeEndTyping), postfix: nameof(AfterEndTyping));
+                // Any native continue (click, key, CTRL press with auto off) ends the wait: no double advance.
+                own.Hook(typeof(UIDialogCtrl), "OnAction_ContinueTalk", prefix: nameof(BeforeContinueTalk));
+            })) { failed = true; return; }
+        Log.Msg($"Ready (0.1.6, Restitutor.Core {CoreInfo.Version}). Saved mode={Store.Current}; settings={Path.Combine(MelonEnvironment.UserDataDirectory,"Restitutor","textspeed.v1.json")}");
     }
     private static TypingEffectObject?[] Effects(UIDialogView v) => new[] {v.TypingEffectDialogContent,v.TypingEffectDialogAside,v.TypingEffectBubbleLeft,v.TypingEffectBubbleMiddle,v.TypingEffectBubbleRight};
     private static void RegisterDialog(UIDialogView __instance)

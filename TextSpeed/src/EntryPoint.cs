@@ -1,5 +1,5 @@
 using MelonLoader;
-[assembly: MelonInfo(typeof(Restitutor.TextSpeed.TextSpeedMod), "Restitutor text speed", "0.1.5", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.TextSpeed.TextSpeedMod), "Restitutor text speed", "0.1.6", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.TextSpeed;
 // The only file to omit when merging into a future MelonMod entry point.

@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using HarmonyLib;
 using MelonLoader;
+using Restitutor.Core;
 using MelonLoader.Utils;
 using Il2CppClient.Manager;
 using Il2CppClient.PlayerStore;
@@ -10,7 +11,7 @@ using Il2CppClient.UILogic.UIBag;
 using Il2CppFairyGUI;
 using IList = Il2CppSystem.Collections.Generic.List<Il2CppClient.PlayerStore.PlayerItemData>;
 
-[assembly: MelonInfo(typeof(Restitutor.ItemRebuild.EntryPoint), "Restitutor Additional Item Rebuild", "0.1.22", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.ItemRebuild.EntryPoint), "Restitutor Additional Item Rebuild", "0.1.23", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.ItemRebuild;
 
@@ -35,7 +36,19 @@ public sealed partial class EntryPoint : MelonMod
         log = LoggerInstance;
         runtime = this;
         thread = Environment.CurrentManagedThreadId;
-        try
+        // Everything that touches Restitutor.Core sits in Install(): without Restitutor.Core.dll in
+        // UserLibs the failure surfaces here and only this mod stays disabled.
+        try { Install(); }
+        catch (FileNotFoundException ex) when (ex.FileName?.StartsWith("Restitutor.Core", StringComparison.Ordinal) == true)
+        { log.Error("Restitutor.Core.dll is missing from UserLibs; Item Rebuild stays disabled."); }
+    }
+    HookSet? hooks;
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    void Install()
+    {
+        if (!CoreInfo.Require(log, "0.1.0")) return;
+        hooks = new HookSet(HarmonyInstance, typeof(EntryPoint));
+        if (hooks.InstallAll(log, "Item Rebuild install", () =>
         {
             string path = Path.Combine(MelonEnvironment.GameRootDirectory, "GameAssembly.dll");
             using var f = File.OpenRead(path);
@@ -59,16 +72,14 @@ public sealed partial class EntryPoint : MelonMod
             InstallLand();
             InstallSales(); InstallSupplySlider(); InstallUnlockItems();
             enabled = true;
-            log.Msg("Item Rebuild 0.1.22 ready (sale tooltip follows grouped rows, single units toggle without popup, sale list position restored after popup): consumable/skill-book/language-book stacks, equipment display groups (weapon/armor/tool/clothes), sale quantity slider, hidden cabin blueprints, owned cabin blueprints and held/unlocked route charts hidden from shops.");
-        }
-        catch (Exception ex) { HarmonyInstance.UnpatchSelf(); log.Error(ex.ToString()); }
+        }))
+            log.Msg("Item Rebuild 0.1.23 ready (Restitutor.Core " + CoreInfo.Version + "; hook registration only, behaviour as 0.1.22 (sale tooltip follows grouped rows, single units toggle without popup, sale list position restored after popup): consumable/skill-book/language-book stacks, equipment display groups (weapon/armor/tool/clothes), sale quantity slider, hidden cabin blueprints, owned cabin blueprints and held/unlocked route charts hidden from shops.");
     }
+    // Declared-only, name must be unique (as 0.1.22). UIManager targets are refused by Core until the
+    // game is ready; the only one (ShowInputNumPromptBox) is installed lazily during play.
     void Patch(Type type, string name, string? prefix = null, string? postfix = null, string? finalizer = null)
     {
-        var methods=type.GetMethods(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance|BindingFlags.Static|BindingFlags.DeclaredOnly).Where(x=>x.Name==name).ToArray();
-        if(methods.Length!=1) throw new MissingMethodException(type.FullName,name+" must be unique");
-        HarmonyMethod? H(string? n) => n==null?null:new(typeof(EntryPoint).GetMethod(n,BindingFlags.Static|BindingFlags.NonPublic)!);
-        HarmonyInstance.Patch(methods[0],H(prefix),H(postfix),finalizer:H(finalizer));
+        hooks!.Hook(type,name,prefix:prefix,postfix:postfix,finalizer:finalizer);
     }
     static void Reset() { ResetLand(); ResetSales(); ResetUnlockItems(); ClearSupplySlider(); exchangeSpace=null; ClearEquipmentGroups(); ClearBagBadges(); bag=null; owner=null; backedUp.Clear(); }
     static void Bind(PlayerBagDB __instance) { if(bag!=null&&bag.Pointer!=__instance.ItemBag.Pointer) ClearBagBadges(); owner=__instance; bag=__instance.ItemBag; }

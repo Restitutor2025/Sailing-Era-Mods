@@ -1,3 +1,8 @@
+# Item Rebuild — 0.1.23 (Restitutor.Core 전환, 기능 변경 없음, 게임 확인 전)
+[0.1.23](0.1.23.md). 필요: `UserLibs\Restitutor.Core.dll` 0.1.0 이상.
+
+이전 기록:
+
 # Item Rebuild — 0.1.22
 
 판매 툴팁을 묶음 행에 맞춤(SetCurGoods Postfix), 1개짜리는 수량 창 없이 선택, 수량 창 뒤 목록 위치 복원. 빌드 0/0, PASS 5675, 게임 확인 전. [상세](0.1.22.md)

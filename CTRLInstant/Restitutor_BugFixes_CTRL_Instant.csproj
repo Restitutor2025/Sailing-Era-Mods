@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>Restitutor_BugFixes_CTRL_Instant</AssemblyName>
-    <Version>0.1.6</Version>
+    <Version>0.1.7</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -18,4 +18,6 @@
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Unity.InputSystem"><HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\Unity.InputSystem.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
+  <!-- Restitutor.Core ships separately in UserLibs; never copy it next to the mod. -->
+  <ItemGroup><ProjectReference Include="..\Core\Restitutor.Core.csproj"><Private>false</Private></ProjectReference></ItemGroup>
 </Project>
