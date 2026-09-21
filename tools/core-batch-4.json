@@ -1,0 +1,11 @@
+{"name":"core-batch-4","branch":"refactor/cheats-core",
+ "desc":"Cheats Interface 1.6.0 + Skill 1.0.5 on Restitutor.Core 0.2.0 (shared input gate, behaviour unchanged), then commit and push.",
+ "rollback":"Cheats\\releases\\1.5.1 Interface and Skill DLLs over the installed files.",
+ "requires_merged":"feat/core-input-gate",
+ "core_ok":["36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+ "installs":[
+  ["Cheats\\releases\\1.6.0\\Restitutor_Cheats_Interface.dll","Mods\\Cheats\\Restitutor_Cheats_Interface.dll","E02EB667FEFB9D79B766C594A08CE3FAD2590753BEF68224127E035FBE05A2E2"],
+  ["Cheats\\releases\\1.6.0\\Restitutor_Cheats_Skill.dll","Mods\\Cheats\\Restitutor_Cheats_Skill.dll","20BBB0C6EC2AD2454954B5417667B9F70DF4BDC023647929409B85C066716CD2"]],
+ "commits":[
+  [["Cheats","docs/mods/cheat"],"refactor(cheats): Interface 1.6.0 and Skill 1.0.5 on Restitutor.Core","Host.Hook keeps its signature and lookup rules but registers through Core HookSet, so Speed/Battle/Contribution need no rebuild. Interface input capture moves to the shared Core input gate; Skill hooks through HookSet. Requires Restitutor.Core 0.2.0. Optional package, distributed separately."],
+  [["tools","core-batch-4.ps1","core-batch-4.bat"],"chore: Core batch 4 (cheats) script",""]]}
