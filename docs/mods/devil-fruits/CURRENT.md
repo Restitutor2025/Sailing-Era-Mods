@@ -1,5 +1,8 @@
 # Devil Fruits — CURRENT
 
+## 0.1.4 — 취소(2026-09-22)
+획득 알림 위치 이동안은 사용자 판단으로 철회: 정상 획득에서는 알림 때문에 클릭 못 하는 상황이 생기지 않음(치트로 인물 탭에서 추가할 때만 발생). 소스는 `DevilFruits/archive/0.1.4-rejected/`.
+
 ## 0.1.3 (2026-09-22) — Restitutor.Core 전환, 기능 변경 없음, 게임 확인 전
 [0.1.3.md](0.1.3.md). 필요: `UserLibs\Restitutor.Core.dll` 0.1.0 이상.
 
