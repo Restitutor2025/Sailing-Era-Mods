@@ -1,14 +1,15 @@
 # Generates <name>.ps1 + <name>.bat: game closed + Core check -> hash-checked install -> branch from origin/main
 # (requires the previous branch to be merged) -> commits -> push -> open PR page.
 import sys,json
-def make(name,branch,desc,installs,commits,requires_merged=None,rollback=''):
+def make(name,branch,desc,installs,commits,requires_merged=None,rollback='',core_ok=None):
+    core_ok=core_ok or ['928E5F54948C12F769085780447F7E4647B14C86BA076EA0ABEEA7AC55E28027']
     TR='Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>'; SE='Claude-Session: https://claude.ai/code/session_01QAvCUBF7RSjUXDbamCbmja'
     L=['\ufeff# '+name+': '+desc,'# Run with the game closed. Safe to run again.'+(' Roll back: '+rollback if rollback else ''),
     "$ErrorActionPreference='Continue'",
     "$p='E:\\Documents\\ChatGPT\\Sailing_era_Restitutor'; $g='E:\\Program\\steam\\steamapps\\common\\Sailing Era'",
     "function Fail($m){ Write-Host \"FAILED: $m\" -ForegroundColor Red; exit 1 }",
     "if(Get-Process SailingEra -EA SilentlyContinue){ Fail '게임을 먼저 종료하세요' }",
-    "if((Get-FileHash \"$g\\UserLibs\\Restitutor.Core.dll\").Hash -ne '928E5F54948C12F769085780447F7E4647B14C86BA076EA0ABEEA7AC55E28027'){ Fail 'UserLibs\\Restitutor.Core.dll 0.1.0 이 없거나 다릅니다' }",
+    "$core=\"$g\\UserLibs\\Restitutor.Core.dll\"; if(-not (Test-Path $core) -or @("+','.join("'"+h+"'" for h in core_ok)+") -notcontains (Get-FileHash $core).Hash){ Fail 'UserLibs\\Restitutor.Core.dll 이 없거나 예상 버전이 아닙니다' }",
     "Set-Location $p",
     "if(Test-Path '.git\\index.lock'){ Fail '.git\\index.lock 이 있습니다. 다른 git 이 없는지 확인 후 지우고 다시 실행' }",
     "git fetch -q origin; if($LASTEXITCODE -ne 0){ Fail 'git fetch' }"]

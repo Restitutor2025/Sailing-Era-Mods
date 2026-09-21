@@ -148,6 +148,7 @@ namespace Restitutor.TabCharacters
   private static bool Allowed=true;private static EntryPoint? host=new();public class Log {public static List<string> Lines=new();public void Msg(string s){Lines.Add(s);}public void Error(string x){}public void Warning(string x){Lines.Add(x);} }public Log LoggerInstance=new();
   private static bool IsCharacter(UICharacterView v)=>v._model.SheetType==ESheetType.Character;
   private void Patch(Type t,string n,Type[] a,string p,string? post=null){}
+  private void InputHandler(Func<UnityEngine.InputSystem.InputAction.CallbackContext,bool> allow){}
  }
 }
 

@@ -1,7 +1,7 @@
 // Offline test doubles. No game/Unity/MelonLoader assembly is loaded by this executable.
 namespace HarmonyLib {
  public class HarmonyMethod { public HarmonyMethod(System.Reflection.MethodInfo x){} }
- public class Harmony { public static int Registrations; public void UnpatchSelf(){} public System.Reflection.MethodInfo? Patch(System.Reflection.MethodBase m,HarmonyMethod? p=null,HarmonyMethod? q=null,HarmonyMethod? transpiler=null,HarmonyMethod? finalizer=null){Registrations++;return null;} }
+ public class Harmony { public Harmony(){} public Harmony(string id){} public static int Registrations; public void UnpatchSelf(){} public System.Reflection.MethodInfo? Patch(System.Reflection.MethodBase m,HarmonyMethod? prefix=null,HarmonyMethod? postfix=null,HarmonyMethod? transpiler=null,HarmonyMethod? finalizer=null){Registrations++;return null;} }
 }
 namespace MelonLoader {
  public class MelonInfoAttribute:Attribute { public MelonInfoAttribute(Type t,string n,string v,string a){} }
@@ -130,3 +130,5 @@ namespace Il2CppUILandExplore {
 
 namespace Il2CppUILandExplore {public class UIcompLandExplore:Il2CppFairyGUI.GComponent {public UIButtonItem BtnSupply=new();}}
 namespace Il2CppCore.SceneSystem { public class SceneManager { public static SceneManager? Instance; public bool IsSceneEntered=>true; } }
+namespace UnityEngine.InputSystem { public class InputAction { public string name = ""; public struct CallbackContext { public InputAction? action; } } }
+namespace Il2CppCore.InputSystem { public class InputSystemManager { public void OnEventCaptureInput(UnityEngine.InputSystem.InputAction.CallbackContext ctx) {} } }

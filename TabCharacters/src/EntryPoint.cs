@@ -1,12 +1,14 @@
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using HarmonyLib;
 using MelonLoader;
 using MelonLoader.Utils;
+using Restitutor.Core;
 using Il2CppClient.UILogic.UICharacter;
 using Il2CppFairyGUI;
+using UnityEngine.InputSystem;
 
-[assembly: MelonInfo(typeof(Restitutor.TabCharacters.EntryPoint), "Restitutor Additional Tab Characters", "0.6.11", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.TabCharacters.EntryPoint), "Restitutor Additional Tab Characters", "0.6.12", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 
 namespace Restitutor.TabCharacters;
@@ -25,7 +27,20 @@ public sealed partial class EntryPoint : MelonMod
     {
         host = this;
         mainThread = Environment.CurrentManagedThreadId;
-        try
+        // Everything that touches Restitutor.Core sits in Install(): without Restitutor.Core.dll in
+        // UserLibs the failure surfaces here and only this mod stays disabled.
+        try { Install(); }
+        catch (FileNotFoundException ex) when (ex.FileName?.StartsWith("Restitutor.Core", StringComparison.Ordinal) == true)
+        { enabled = false; LoggerInstance.Error("Restitutor.Core.dll is missing from UserLibs; Characters stays disabled."); }
+    }
+
+    private HookSet? hooks;
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void Install()
+    {
+        if (!CoreInfo.Require(LoggerInstance, "0.2.0")) { enabled = false; return; }
+        hooks = new HookSet(HarmonyInstance, typeof(EntryPoint));
+        if (!hooks.InstallAll(LoggerInstance, "Characters initialization", () =>
         {
             using var stream = File.OpenRead(Path.Combine(MelonEnvironment.GameRootDirectory, "GameAssembly.dll"));
             using var hash = SHA256.Create();
@@ -43,23 +58,17 @@ public sealed partial class EntryPoint : MelonMod
             Patch(typeof(GList), "Dispose", Type.EmptyTypes, nameof(BeforeListDispose));
             InstallBooks();
             enabled = true;
-            LoggerInstance.Msg("Characters 0.6.11 (idle equip-confirm key read removed; 0.6.10 right-click close swallows only its own Action_B until release; 0.6.9 language book panel: row click through btnReturn, native language list prepared for book details; [LangTrace] kept): equipment slots open the native equipment list/filter/details beside them (hover preview on skills and HP/attack; right click on the selected slot takes its item off); read-only native skill info with adjacent book/point panel; skill tab retired; centered portrait pages.");
-        }
-        catch (Exception ex)
-        {
-            enabled = false;
-            HarmonyInstance.UnpatchSelf();
-            LoggerInstance.Error("Characters initialization failed; hooks removed: " + ex);
-        }
+        })) { enabled = false; return; }
+        LoggerInstance.Msg("Characters 0.6.12 (Restitutor.Core " + CoreInfo.Version + ", shared input gate; behaviour as 0.6.11: idle equip-confirm key read removed; right-click close swallows only its own Action_B until release; language book panel; [LangTrace] kept): equipment slots open the native equipment list/filter/details beside them; read-only native skill info with adjacent book/point panel; skill tab retired; centered portrait pages.");
     }
 
+    // Exact parameter types, declared members only (as 0.6.11).
     private void Patch(Type type, string name, Type[] args, string? prefix, string? postfix = null, string? finalizer = null)
-    {
-        var method = type.GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly,
-            null, args, null) ?? throw new MissingMethodException(type.FullName, name);
-        HarmonyInstance.Patch(method, prefix == null ? null : H(prefix), postfix == null ? null : H(postfix), finalizer: finalizer == null ? null : H(finalizer));
-    }
-    private static HarmonyMethod H(string name) => new(typeof(EntryPoint).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static)!);
+        => hooks!.Hook(type, name, prefix: prefix, postfix: postfix, finalizer: finalizer, args: args);
+    // 0.6.12: the book/equipment input capture runs on the shared Core input gate.
+    private void InputHandler(Func<InputAction.CallbackContext, bool> allow) => hooks!.Input("Tab Characters", allow);
+    // Removes this mod's hooks and its input handler (HarmonyInstance.UnpatchSelf() alone would leave the handler).
+    private void RemoveHooks() { if (hooks != null) hooks.RemoveAll(); else HarmonyInstance.UnpatchSelf(); }
     // 0.6.0 equipment panel hooks (EquipPanel*.cs); optional so the pagination suite stays independent.
     static partial void EquipCloseForSheet(string reason);
     static partial void EquipRefreshProbe(UICharacterView view);
@@ -214,7 +223,7 @@ public sealed partial class EntryPoint : MelonMod
             {
                 enabled = false;
                 Release(true);
-                HarmonyInstance.UnpatchSelf();
+                RemoveHooks();
                 LoggerInstance.Warning("Characters pagination disabled for this session after recovery.");
             }
             else if (state != null && (state.List.isDisposed || state.View._UIContent_k__BackingField == null))
@@ -223,7 +232,7 @@ public sealed partial class EntryPoint : MelonMod
         catch (Exception ex)
         {
             enabled = false;
-            HarmonyInstance.UnpatchSelf();
+            RemoveHooks();
             state = null;
             LoggerInstance.Error("Characters recovery failed: " + ex);
         }
@@ -232,7 +241,7 @@ public sealed partial class EntryPoint : MelonMod
     {
         enabled = false;
         try { Release(true); }
-        finally { HarmonyInstance.UnpatchSelf(); host = null; }
+        finally { RemoveHooks(); host = null; }
     }
 
     private sealed class PageState

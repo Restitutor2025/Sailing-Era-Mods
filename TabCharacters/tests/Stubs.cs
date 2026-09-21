@@ -5,7 +5,9 @@ namespace HarmonyLib
     public sealed class HarmonyMethod { public HarmonyMethod(MethodInfo method) { } }
     public sealed class Harmony
     {
-        public void Patch(MethodInfo method, HarmonyMethod? prefix, HarmonyMethod? postfix, HarmonyMethod? finalizer) { }
+        public Harmony() { }
+        public Harmony(string id) { }
+        public MethodInfo? Patch(MethodBase method, HarmonyMethod? prefix = null, HarmonyMethod? postfix = null, HarmonyMethod? transpiler = null, HarmonyMethod? finalizer = null) => null;
         public void UnpatchSelf() { }
     }
 }
@@ -15,10 +17,13 @@ namespace MelonLoader
     { public MelonInfoAttribute(Type type, string name, string version, string author) { } }
     [AttributeUsage(AttributeTargets.Assembly)] public sealed class MelonGameAttribute : Attribute
     { public MelonGameAttribute(string company, string game) { } }
-    public class Log { public void Msg(string text) { } public void Warning(string text) { } public void Error(string text) { } }
+    public class MelonLogger { public class Instance { public Instance() { } public Instance(string name) { } public void Msg(string text) { } public void Warning(string text) { } public void Error(string text) { } } }
+    public delegate void LemonAction();
+    public class MelonEvent { public void Subscribe(LemonAction a, int priority = 0, bool unsubscribeOnFirstInvocation = false) { } public void Unsubscribe(LemonAction a) { } }
+    public static class MelonEvents { public static readonly MelonEvent OnUpdate = new(); }
     public class MelonMod
     {
-        public readonly Log LoggerInstance = new();
+        public readonly MelonLogger.Instance LoggerInstance = new();
         public readonly HarmonyLib.Harmony HarmonyInstance = new();
         public virtual void OnInitializeMelon() { }
         public virtual void OnDeinitializeMelon() { }
@@ -196,3 +201,7 @@ namespace Il2CppCharacter
     public sealed class UICom_RoleInfo
     { public Il2CppFairyGUI.GLoader loaderRole = new Il2CppCore.NewUISystem.MyGLoader(); }
 }
+// 0.6.12: Restitutor.Core sources are compiled into this test; minimal doubles for what Core touches.
+namespace Il2CppCore.SceneSystem { public class SceneManager { public static SceneManager? Instance; public bool IsSceneEntered => false; } }
+namespace UnityEngine.InputSystem { public class InputAction { public string name = ""; public struct CallbackContext { public InputAction? action; } } }
+namespace Il2CppCore.InputSystem { public class InputSystemManager { public void OnEventCaptureInput(UnityEngine.InputSystem.InputAction.CallbackContext ctx) { } } }

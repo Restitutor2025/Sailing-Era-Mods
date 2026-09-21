@@ -7,7 +7,7 @@ public static class CoreInfo
 {
     /// <summary>Semantic version of this Core. A property, not a const: a const would be
     /// copied into each mod at build time and always report the version the mod was built with.</summary>
-    public static string Version => "0.1.0";
+    public static string Version => "0.2.0";
 
     /// <summary>True when this Core is at least <paramref name="minimum"/> (x.y.z).</summary>
     public static bool Satisfies(string minimum) => VersionText.AtLeast(Version, minimum);

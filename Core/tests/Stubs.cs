@@ -20,6 +20,8 @@ namespace HarmonyLib
     {
         public readonly List<(MethodBase Original, HarmonyMethod? Pre, HarmonyMethod? Post, HarmonyMethod? Fin)> Patches = new();
         public int Unpatched;
+        public Harmony() {}
+        public Harmony(string id) {}
         public MethodInfo? Patch(MethodBase original, HarmonyMethod? prefix = null, HarmonyMethod? postfix = null, HarmonyMethod? transpiler = null, HarmonyMethod? finalizer = null)
         { Patches.Add((original, prefix, postfix, finalizer)); return null; }
         public void UnpatchSelf() { Unpatched++; Patches.Clear(); }
@@ -30,3 +32,5 @@ namespace Il2CppCore.SceneSystem
     public class SceneManager { public static SceneManager? Instance; public static bool Throw; public bool Entered; public bool IsSceneEntered => Throw ? throw new Exception("native") : Entered; }
 }
 namespace Il2CppClient.Manager { public class UIManager { public void SetFocusOnUIView() {} } }
+namespace UnityEngine.InputSystem { public class InputAction { public string name = ""; public struct CallbackContext { public InputAction? action; } } }
+namespace Il2CppCore.InputSystem { public class InputSystemManager { public void OnEventCaptureInput(UnityEngine.InputSystem.InputAction.CallbackContext ctx) {} } }

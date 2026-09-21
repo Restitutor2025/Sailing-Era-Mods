@@ -65,7 +65,7 @@ internal static class SharedMap
         H(typeof(UIMapCtrl), "ClickPortCheckLine", nameof(ClickPort));
         H(typeof(UIMapCtrl), "SetLane", nameof(SetLanes), Type.EmptyTypes);
         H(typeof(UIMapHarbourIcon), "_InitComponent_b__16_0", nameof(PortClick));
-        H(typeof(InputSystemManager), "OnEventCaptureInput", nameof(CaptureClose));
+        EntryPoint.InputHandler(CaptureClose); // 0.2.4: shared Core input gate (was a prefix on InputSystemManager.OnEventCaptureInput)
         EntryPoint.Hook(typeof(UIMapView), "Refresh", typeof(SharedMap), after: nameof(MapRefresh));
         EntryPoint.Hook(typeof(UIMapHarbourIcon), "UpdateInfo", typeof(SharedMap), before: nameof(BeforePortInfo), after: nameof(PortRefresh), final: nameof(AfterPortInfo));
         EntryPoint.Hook(typeof(UIMapHandler), "TouchPortOrAreaListUI", typeof(SharedMap), after: nameof(OverList));

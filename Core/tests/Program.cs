@@ -21,10 +21,10 @@ Check(Throws<FormatException>(() => VersionText.Parse("0.1")), "two parts");
 Check(Throws<FormatException>(() => VersionText.Parse("0.1.x")), "non-number");
 Check(Throws<FormatException>(() => VersionText.Parse("0.-1.0")), "negative");
 Check(typeof(CoreInfo).GetProperty("Version") != null && typeof(CoreInfo).GetField("Version") == null, "Version is a property, not a const");
-Check(CoreInfo.Version == "0.1.0" && CoreInfo.Satisfies("0.1.0") && !CoreInfo.Satisfies("0.2.0"), "CoreInfo");
+Check(CoreInfo.Version == "0.2.0" && CoreInfo.Satisfies("0.1.0") && CoreInfo.Satisfies("0.2.0") && !CoreInfo.Satisfies("0.3.0"), "CoreInfo");
 var modLog = new MelonLogger.Instance("mod");
 Check(!CoreInfo.Require(modLog, "9.0.0") && modLog.Lines.Count == 1 && modLog.Lines[0].StartsWith("ERR"), "Require logs one line");
-Check(CoreInfo.Require(modLog, "0.1.0") && modLog.Lines.Count == 1, "Require silent when met");
+Check(CoreInfo.Require(modLog, "0.2.0") && modLog.Lines.Count == 1, "Require silent when met");
 
 // Method lookup
 Check(MethodLookup.Unique(typeof(Target), "Single").Name == "Single", "unique");
@@ -54,7 +54,7 @@ Check(Throws<ArgumentException>(() => q.Add("", () => { })) && Throws<ArgumentNu
 // HookSet before ready
 var h = new Harmony(); var hooks = new HookSet(h, typeof(Handlers));
 Check(MelonEvents.OnUpdate.Subs.Count == 1, "Core watches readiness after first use");
-Check(MelonLogger.Instance.All.Any(l => l.Contains("Restitutor.Core 0.1.0 loaded")), "load line");
+Check(MelonLogger.Instance.All.Any(l => l.Contains("Restitutor.Core 0.2.0 loaded")), "load line");
 hooks.Hook(typeof(Target), "Single", prefix: "Pre", postfix: "PublicPost", finalizer: "Fin");
 Check(h.Patches.Count == 1 && h.Patches[0].Pre!.method.Name == "Pre" && h.Patches[0].Post!.method.Name == "PublicPost" && h.Patches[0].Fin!.method.Name == "Fin", "patched with all handlers");
 Check(Throws<MissingMethodException>(() => hooks.Hook(typeof(Target), "StaticOne", prefix: "Pre", postfix: "Nope")) && h.Patches.Count == 1, "missing handler patches nothing");
@@ -82,6 +82,33 @@ GameReady.Run("late", () => ran.Add("late")); Check(ran.Last() == "late" && Melo
 GameReady.Run("late-bad", () => throw new Exception("x")); Check(true, "late failure isolated");
 var h2 = new Harmony(); new HookSet(h2, typeof(Handlers)).Hook(typeof(Il2CppClient.Manager.UIManager), "SetFocusOnUIView", postfix: "PublicPost");
 Check(h2.Patches.Count == 1, "UIManager allowed after ready");
+
+// InputGate (0.2.0)
+Check(InputGate.Count == 0, "no input handlers yet");
+var gh = new Harmony(); var gset = new HookSet(gh, typeof(Handlers));
+var calls = new List<string>();
+UnityEngine.InputSystem.InputAction.CallbackContext Ctx(string n) => new() { action = new UnityEngine.InputSystem.InputAction { name = n } };
+gset.Input("A", c => { calls.Add("A:" + c.action!.name); return true; });
+var coreInputPatch = typeof(InputGate).GetField("harmony", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null) as Harmony;
+Check(coreInputPatch != null && coreInputPatch!.Patches.Count == 1 && coreInputPatch.Patches[0].Original.Name == "OnEventCaptureInput"
+      && coreInputPatch.Patches[0].Pre!.method.Name == "Dispatch" && coreInputPatch.Patches[0].Post == null, "one shared prefix on OnEventCaptureInput");
+bool Send(string n) => (bool)coreInputPatch!.Patches[0].Pre!.method.Invoke(null, new object[] { Ctx(n) })!;
+var other = new HookSet(new Harmony(), typeof(Handlers));
+other.Input("B", c => { calls.Add("B"); return c.action!.name != "Action_B"; });
+other.Input("C", c => { calls.Add("C"); throw new Exception("C broke"); });
+Check(coreInputPatch!.Patches.Count == 1 && InputGate.Count == 3, "second mod reuses the same hook");
+Check(Send("Action_A") && string.Join(",", calls) == "A:Action_A,B,C", "all handlers run in order, broken one counts as allow");
+Check(MelonLogger.Instance.All.Count(l => l.Contains("C: input handler failed")) == 1, "failure logged with owner");
+calls.Clear();
+Check(!Send("Action_B") && string.Join(",", calls) == "A:Action_B,B,C", "any false swallows, later handlers still run");
+Check(MelonLogger.Instance.All.Count(l => l.Contains("C: input handler failed")) == 1, "failure logged once");
+other.RemoveAll();
+Check(InputGate.Count == 1 && coreInputPatch.Patches.Count == 1, "RemoveAll drops only that mod's handlers");
+calls.Clear(); Check(Send("Action_B") && string.Join(",", calls) == "A:Action_B", "removed handlers no longer called");
+var failing = new HookSet(new Harmony(), typeof(Handlers)); var flog = new MelonLogger.Instance("mod");
+Check(!failing.InstallAll(flog, "Install", () => { failing.Input("D", c => false); failing.Hook(typeof(Target), "Missing", prefix: "Pre"); }) && InputGate.Count == 1, "failed install removes its input handler too");
+Check(Throws<ArgumentException>(() => InputGate.Register("", c => true)) && Throws<ArgumentNullException>(() => InputGate.Register("x", null!)), "register arguments");
+gset.RemoveAll(); Check(InputGate.Count == 0 && Send("Action_B"), "no handlers: input allowed");
 
 Console.WriteLine($"PASS: {checks} checks. Managed stubs only; no Unity, game, Harmony native patching or MelonLoader runtime.");
 
