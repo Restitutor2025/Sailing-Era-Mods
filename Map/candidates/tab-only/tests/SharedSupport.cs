@@ -133,6 +133,7 @@ namespace Restitutor.Map
     {
         internal static TestLog Log = new();
         internal static void Hook(Type target, string name, Type handler, string? before = null, string? after = null, Type[]? args = null, string? final = null) {}
+        internal static void InputHandler(Func<UnityEngine.InputSystem.InputAction.CallbackContext, bool> allow) {}
     }
     internal class TestLog
     { public void Warning(string text) => Msg("WARN "+text);
