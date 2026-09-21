@@ -1,5 +1,8 @@
 # Stat Rank — CURRENT
 
+## 0.1.6 (2026-09-22) — Restitutor.Core 전환, 기능 변경 없음, 게임 확인 전
+[0.1.6](0.1.6.md). 필요: `UserLibs\Restitutor.Core.dll` 0.1.0 이상. 이전 소스 `StatRank/archive/0.1.5/`.
+
 ## 0.1.5 (2026-09-21) — 빌드·실전 미확인
 팁 전체 투명도 0.7 → 0.8 (사용자: "지금도 너무 투명"). 그 외 0.1.4와 같음. 이전 소스 `StatRank/archive/0.1.4/`.
 
