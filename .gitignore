@@ -1,6 +1,6 @@
 # Allowlist: everything is ignored unless re-included below. Game-extracted data
-# (analysis/, GameAssembly copies, dumps), build output and release DLLs stay out.
-# Add one block per mod when it joins the repo.
+# (analysis/, GameAssembly copies, dumps), build output (bin/obj), archives, evidence,
+# release DLLs, logs and *.bak files stay out. Add one block per mod when it joins the repo.
 /*
 !/.gitignore
 
@@ -12,11 +12,26 @@
 /CityEditorCore/*
 !/CityEditorCore/README.md
 
+# Docs (all mods)
+!/docs/
+/docs/*
+!/docs/mods/
+
+# Shared build config
+!/NuGet.Config
+
+# Intro Skip (root project)
+!/Restitutor_fixes.csproj
+!/src/
+/src/*
+!/src/*.cs
+
 # Stat Rank
 !/StatRank/
 /StatRank/*
-!/StatRank/build.ps1
 !/StatRank/*.csproj
+!/StatRank/*.md
+!/StatRank/build.ps1
 !/StatRank/src/
 /StatRank/src/*
 !/StatRank/src/*.cs
@@ -24,10 +39,183 @@
 /StatRank/tests/*
 !/StatRank/tests/*.cs
 !/StatRank/tests/*.csproj
+!/StatRank/tests/*.props
+!/StatRank/tests/*.ps1
 
-# Docs (per mod)
-!/docs/
-/docs/*
-!/docs/mods/
-/docs/mods/*
-!/docs/mods/stat-rank/
+# Text Speed
+!/TextSpeed/
+/TextSpeed/*
+!/TextSpeed/*.csproj
+!/TextSpeed/*.md
+!/TextSpeed/build.ps1
+!/TextSpeed/src/
+/TextSpeed/src/*
+!/TextSpeed/src/*.cs
+!/TextSpeed/tests/
+/TextSpeed/tests/*
+!/TextSpeed/tests/*.cs
+!/TextSpeed/tests/*.csproj
+!/TextSpeed/tests/*.props
+!/TextSpeed/tests/*.ps1
+
+# Instant Entrance
+!/InstantEntrance/
+/InstantEntrance/*
+!/InstantEntrance/*.csproj
+!/InstantEntrance/*.md
+!/InstantEntrance/build.ps1
+!/InstantEntrance/src/
+/InstantEntrance/src/*
+!/InstantEntrance/src/*.cs
+!/InstantEntrance/tests/
+/InstantEntrance/tests/*
+!/InstantEntrance/tests/*.cs
+!/InstantEntrance/tests/*.csproj
+!/InstantEntrance/tests/*.props
+!/InstantEntrance/tests/*.ps1
+
+# Fleet Info
+!/FleetInfo/
+/FleetInfo/*
+!/FleetInfo/*.csproj
+!/FleetInfo/*.md
+!/FleetInfo/verify.py
+!/FleetInfo/src/
+/FleetInfo/src/*
+!/FleetInfo/src/*.cs
+
+# Trade Exp (not installed)
+!/TradeExp/
+/TradeExp/*
+!/TradeExp/*.csproj
+!/TradeExp/*.cs
+!/TradeExp/*.py
+!/TradeExp/*.md
+
+# CTRL Instant
+!/CTRLInstant/
+/CTRLInstant/*
+!/CTRLInstant/*.csproj
+!/CTRLInstant/*.md
+!/CTRLInstant/build.ps1
+!/CTRLInstant/src/
+/CTRLInstant/src/*
+!/CTRLInstant/src/*.cs
+!/CTRLInstant/tests/
+/CTRLInstant/tests/*
+!/CTRLInstant/tests/*.cs
+!/CTRLInstant/tests/*.csproj
+!/CTRLInstant/tests/*.props
+!/CTRLInstant/tests/*.ps1
+
+# Contribution
+!/Contribution/
+/Contribution/*
+!/Contribution/*.csproj
+!/Contribution/*.md
+!/Contribution/build.ps1
+!/Contribution/export-dnspy.ps1
+!/Contribution/src/
+/Contribution/src/*
+!/Contribution/src/*.cs
+!/Contribution/tests/
+/Contribution/tests/*
+!/Contribution/tests/*.cs
+!/Contribution/tests/*.csproj
+!/Contribution/tests/*.props
+!/Contribution/tests/*.ps1
+
+# Item Rebuild
+!/ItemRebuild/
+/ItemRebuild/*
+!/ItemRebuild/*.csproj
+!/ItemRebuild/*.md
+!/ItemRebuild/build.ps1
+!/ItemRebuild/src/
+/ItemRebuild/src/*
+!/ItemRebuild/src/*.cs
+!/ItemRebuild/tests/
+/ItemRebuild/tests/*
+!/ItemRebuild/tests/*.cs
+!/ItemRebuild/tests/*.csproj
+!/ItemRebuild/tests/*.props
+!/ItemRebuild/tests/*.ps1
+
+# Tab Characters
+!/TabCharacters/
+/TabCharacters/*
+!/TabCharacters/*.csproj
+!/TabCharacters/*.md
+!/TabCharacters/build.ps1
+!/TabCharacters/*.bat
+!/TabCharacters/src/
+/TabCharacters/src/*
+!/TabCharacters/src/*.cs
+!/TabCharacters/tests/
+/TabCharacters/tests/*
+!/TabCharacters/tests/*.cs
+!/TabCharacters/tests/*.csproj
+!/TabCharacters/tests/*.props
+!/TabCharacters/tests/*.ps1
+
+# Devil Fruits
+!/DevilFruits/
+/DevilFruits/*
+!/DevilFruits/*.csproj
+!/DevilFruits/*.md
+!/DevilFruits/build.ps1
+!/DevilFruits/src/
+/DevilFruits/src/*
+!/DevilFruits/src/*.cs
+!/DevilFruits/tests/
+/DevilFruits/tests/*
+!/DevilFruits/tests/*.cs
+!/DevilFruits/tests/*.csproj
+!/DevilFruits/tests/*.props
+!/DevilFruits/tests/*.ps1
+
+# HookCensus (diagnostic)
+!/HookCensus/
+/HookCensus/*
+!/HookCensus/*.csproj
+!/HookCensus/*.md
+!/HookCensus/src/
+/HookCensus/src/*
+!/HookCensus/src/*.cs
+
+# Cheats (Interface + feature DLLs + test suites)
+!/Cheats/
+/Cheats/*
+!/Cheats/Directory.Build.props
+!/Cheats/README.md
+!/Cheats/*/
+/Cheats/*/*
+!/Cheats/*/*.cs
+!/Cheats/*/*.csproj
+!/Cheats/*/*.cmd
+!/Cheats/*/*.ps1
+!/Cheats/*/*.props
+/Cheats/archive/
+/Cheats/evidence/
+/Cheats/releases/
+
+# Map (current source: candidates/tab-only)
+!/Map/
+/Map/*
+!/Map/candidates/
+/Map/candidates/*
+!/Map/candidates/tab-only/
+/Map/candidates/tab-only/*
+!/Map/candidates/tab-only/*.csproj
+!/Map/candidates/tab-only/NuGet.Config
+!/Map/candidates/tab-only/src/
+/Map/candidates/tab-only/src/*
+!/Map/candidates/tab-only/src/*.cs
+!/Map/candidates/tab-only/tests/
+/Map/candidates/tab-only/tests/*
+!/Map/candidates/tab-only/tests/*.cs
+!/Map/candidates/tab-only/tests/*.csproj
+!/Map/candidates/tab-only/tests/*.ps1
+
+# Install script
+!/install-2026-09-22-perf.ps1

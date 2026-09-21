@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../src/*.cs" Exclude="../src/BookUiTrace.cs;../src/BookPopup.cs;../src/BookLayout.cs;../src/BookActions.cs;../src/BookDock.cs;../src/BookInteraction.cs;../src/RewardProgression.cs;../src/SkillTabHide.cs;../src/BookCount.cs;../src/EquipPanel.cs;../src/EquipPanelUi.cs;../src/EquipPanelLayout.cs;../src/EquipPreview.cs;../src/EquipGroups.cs;../src/LanguageTrace.cs;../src/LanguageCatcher.cs" /><Compile Include="Stubs.cs" /><Compile Include="Program.cs" /><Compile Include="BookBoundaryStub.cs" />
+  </ItemGroup>
+</Project>
+

@@ -10,7 +10,7 @@ if($LASTEXITCODE -ne 0){ Write-Host "build failed ($LASTEXITCODE)"; exit 1 }
 dotnet run --project "$here\tests\Tests.csproj" -c Release
 if($LASTEXITCODE -ne 0){ Write-Host "tests failed ($LASTEXITCODE)"; exit 1 }
 $dll="$here\bin\Release\net6.0\Restitutor_Additional_Stat_Rank.dll"
-$out="$here\releases\0.1.4"; New-Item -ItemType Directory -Force $out | Out-Null
+$out="$here\releases\0.1.5"; New-Item -ItemType Directory -Force $out | Out-Null
 Copy-Item $dll $out -Force
 Copy-Item $dll "$game\Mods\Additional_Functions\" -Force
 Get-FileHash "$out\Restitutor_Additional_Stat_Rank.dll","$game\Mods\Additional_Functions\Restitutor_Additional_Stat_Rank.dll" -Algorithm SHA256 | Format-List

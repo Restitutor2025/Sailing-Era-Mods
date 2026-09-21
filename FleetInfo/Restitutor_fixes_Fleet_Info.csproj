@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>Restitutor_fixes_Fleet_Info</AssemblyName>
+    <Version>0.1.0</Version>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="src/*.cs" />
+    <EmbeddedResource Include="evidence/GetNpcsBySeaAreaId.bin" LogicalName="FleetInfo.ExpectedBody" />
+    <Reference Include="MelonLoader"><HintPath>E:\Program\steam\steamapps\common\Sailing Era\MelonLoader\net6\MelonLoader.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

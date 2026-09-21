@@ -9,7 +9,7 @@ using Il2CppFairyGUI;
 using Il2CppGyyx.Template;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(Restitutor.StatRank.EntryPoint), "Restitutor Additional Stat Rank", "0.1.4", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.StatRank.EntryPoint), "Restitutor Additional Stat Rank", "0.1.5", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.StatRank;
 
@@ -18,7 +18,7 @@ namespace Restitutor.StatRank;
 public sealed class EntryPoint : MelonMod {
     private const string Baseline="50D53D17829E3E77B9786EA42D998D1AD258F0653846524069F22E5E442EFFCA";
     private const string LabelName="RestitutorStatRank";
-    private const float TipAlpha=.7f; // user: whole window alpha 0.7 (0.4 too faint, 2026-09-21)
+    private const float TipAlpha=.8f; // user: whole window alpha 0.8 (0.4 too faint, 0.7 still too transparent, 2026-09-21)
     private static MelonLogger.Instance log=null!;
     private static bool enabled;
     private static GComponent? tip;
@@ -35,7 +35,7 @@ public sealed class EntryPoint : MelonMod {
             Patch(typeof(UICharacterView),"RefreshTipsRoleInfo",nameof(AfterRoleInfo));
             Patch(typeof(UICharacterView),"HideHook",nameof(AfterHide));
             enabled=true;
-            log.Msg("Stat Rank 0.1.4 loaded; 2 postfixes (UICharacterView.RefreshTipsRoleInfo, HideHook); read-only. Hover by cursor position while the sheet is open; tip alpha 0.7; [HoverTrace] removed.");
+            log.Msg("Stat Rank 0.1.5 loaded; 2 postfixes (UICharacterView.RefreshTipsRoleInfo, HideHook); read-only. Hover by cursor position while the sheet is open; tip alpha 0.8; [HoverTrace] removed.");
         } catch(Exception ex) { HarmonyInstance.UnpatchSelf(); log.Error(ex.ToString()); }
     }
     private void Patch(Type type,string name,string postfix) {

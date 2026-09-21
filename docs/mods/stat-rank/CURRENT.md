@@ -1,3 +1,10 @@
+# Stat Rank — CURRENT
+
+## 0.1.5 (2026-09-21) — 빌드·실전 미확인
+팁 전체 투명도 0.7 → 0.8 (사용자: "지금도 너무 투명"). 그 외 0.1.4와 같음. 이전 소스 `StatRank/archive/0.1.4/`.
+
+아래는 이전 버전 기록이다.
+
 # Stat Rank 0.1.4
 
 DLL: `Restitutor_Additional_Stat_Rank.dll`. [상세](0.1.4.md) · [패치 목록](PATCHES.md).
