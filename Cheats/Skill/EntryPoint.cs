@@ -1,4 +1,5 @@
 using MelonLoader;
+using Restitutor.Core;
 using Il2CppClient.Manager;
 using Il2CppClient.UILogic.UIDrunkery;
 using Il2CppClient.UILogic.UIHeroLevelUp;
@@ -6,7 +7,7 @@ using Il2CppClient.PlayerStore;
 using Il2CppFairyGUI;
 using Restitutor.Cheats.Interface;
 using SceneManager=Il2CppCore.SceneSystem.SceneManager;
-[assembly: MelonInfo(typeof(Restitutor.Cheats.Skill.EntryPoint),"Restitutor Cheats Skill","1.0.4","Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.Cheats.Skill.EntryPoint),"Restitutor Cheats Skill","1.0.5","Restitutor")]
 [assembly: MelonGame("bolingo","SailingEra")]
 [assembly: MelonAdditionalDependencies("Restitutor_Cheats_Interface")]
 namespace Restitutor.Cheats.Skill;
@@ -18,7 +19,8 @@ public sealed class EntryPoint:MelonMod {
     public override void OnInitializeMelon() {
         log=LoggerInstance;
         string state=Settings.Load();
-        try {
+        hooks=new HookSet(HarmonyInstance,typeof(EntryPoint));
+        if(!hooks.InstallAll(log,"Cheats Skill install",() => {
             // Native getter reads the game const for "levels per skill point".
             // Callers (RVA): CanUpSkill, OnClickBtnLevelUp, OnClickBtnLevelUpFive,
             // UIHeroLevelUpView.GetNextPointsLevel, UIHeroLevelUpView.RefreshRoleData.
@@ -30,8 +32,8 @@ public sealed class EntryPoint:MelonMod {
             Hook(typeof(UIHeroLevelUpCtrl),"OnClickBtnLevelUpFive",nameof(BeforeMulti),nameof(AfterMulti));
             Hook(typeof(UIHeroLevelUpCtrl),"ChangeRewardSkillState",nameof(RewardBefore),nameof(GrantExtra));
             Host.Register(panel);loaded=true;
-            log.Msg($"Cheats Skill 1.0.4 loaded; 4 patched methods; interval setting: {state}.");
-        } catch(Exception ex) { HarmonyInstance.UnpatchSelf(); log.Error(ex.ToString()); }
+        })) return;
+        log.Msg($"Cheats Skill 1.0.5 loaded (Restitutor.Core {CoreInfo.Version}); 4 patched methods; interval setting: {state}.");
     }
     private static void Interval(ref int __result) {
         // 1.0.3: Interface O-off returns the game's own value; the saved setting is kept for O-on.
@@ -39,14 +41,10 @@ public sealed class EntryPoint:MelonMod {
         if(originalLogged!=__result) { originalLogged=__result; log.Msg($"Original LevelGetSkill={__result}; applied={Settings.Interval}"); }
         __result=Settings.Interval;
     }
-    // Own lookup: interop may expose native-private methods with non-public accessibility.
-    private void Hook(Type target,string method,string? prefix=null,string? after=null) {
-        var flags=System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.DeclaredOnly;
-        var found=target.GetMethods(flags).Where(m=>m.Name==method && m.GetParameters().Length==0).ToArray();
-        if(found.Length!=1) throw new MissingMethodException(target.FullName,method);
-        HarmonyLib.HarmonyMethod? H(string? name)=>name==null?null:new HarmonyLib.HarmonyMethod(typeof(EntryPoint).GetMethod(name,System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic)!);
-        HarmonyInstance.Patch(found[0],H(prefix),H(after));
-    }
+    // Own lookup: declared members (public or not), parameterless, name must be unique (as 1.0.4).
+    private static HookSet? hooks;
+    private void Hook(Type target,string method,string? prefix=null,string? after=null)
+        => hooks!.Hook(target,method,prefix:prefix,postfix:after,args:Type.EmptyTypes);
     private static bool rewardWasSet;
     private static void RewardBefore(UIHeroLevelUpCtrl __instance) {
         try { rewardWasSet=__instance.Model?.IsRewardSkill!=false; } catch { rewardWasSet=true; }

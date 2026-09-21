@@ -5,12 +5,15 @@ namespace UnityEngine {
 }
 namespace HarmonyLib {
     public class HarmonyMethod { public HarmonyMethod(System.Reflection.MethodInfo method){} }
-    public class Harmony { public void Patch(System.Reflection.MethodInfo m,HarmonyMethod? a,HarmonyMethod? b,HarmonyMethod? finalizer){} public void UnpatchSelf(){} }
+    public class Harmony { public Harmony(){} public Harmony(string id){} public System.Reflection.MethodInfo? Patch(System.Reflection.MethodBase m,HarmonyMethod? prefix=null,HarmonyMethod? postfix=null,HarmonyMethod? transpiler=null,HarmonyMethod? finalizer=null)=>null; public void UnpatchSelf(){} }
 }
 namespace MelonLoader {
     [AttributeUsage(AttributeTargets.Assembly)] public class MelonInfoAttribute:Attribute { public MelonInfoAttribute(Type t,string n,string v,string a){} }
     [AttributeUsage(AttributeTargets.Assembly)] public class MelonGameAttribute:Attribute { public MelonGameAttribute(string a,string b){} }
-    public class MelonLogger { public class Instance { public void Msg(string s){} public void Error(string s){} } }
+    public class MelonLogger { public class Instance { public Instance(){} public Instance(string n){} public void Msg(string s){} public void Error(string s){} } }
+    public delegate void LemonAction();
+    public class MelonEvent { public void Subscribe(LemonAction a,int priority=0,bool unsubscribeOnFirstInvocation=false){} public void Unsubscribe(LemonAction a){} }
+    public static class MelonEvents { public static readonly MelonEvent OnUpdate=new(); }
     public class MelonMod {
         public MelonLogger.Instance LoggerInstance=new(); public HarmonyLib.Harmony HarmonyInstance=new();
         public virtual void OnInitializeMelon(){} public virtual void OnUpdate(){} public virtual void OnDeinitializeMelon(){}
@@ -24,7 +27,7 @@ namespace Il2CppClient.PlayerStore {
 namespace Il2CppClient.Manager {
     public class PlayerDataManager { public static PlayerDataManager Instance=new(); public Il2CppClient.PlayerStore.PlayerData Data=new(); public void ProcessArchiveInitialize(){} }
 }
-namespace Il2CppCore.InputSystem { public class InputSystemManager { public void OnEventCaptureInput(){} } }
+namespace Il2CppCore.InputSystem { public class InputSystemManager { public void OnEventCaptureInput(UnityEngine.InputSystem.InputAction.CallbackContext ctx){} } }
 namespace Il2CppFairyGUI {
     public class InputEvent { public float x,y,mouseWheelDelta; }
     public class DisplayObject { public EventListener onMouseWheel=new(); }
@@ -89,4 +92,5 @@ namespace UnityEngine { public static class Application { public static bool isF
 namespace UnityEngine.InputSystem {
     public class KeyControl { public bool isPressed; }
     public class Keyboard { public static Keyboard? current=new(); public KeyControl hKey=new(),oKey=new(); }
+    public class InputAction { public string name=""; public struct CallbackContext { public InputAction? action; } }
 }

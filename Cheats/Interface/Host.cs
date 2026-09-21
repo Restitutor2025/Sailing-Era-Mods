@@ -1,7 +1,8 @@
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using HarmonyLib;
 using MelonLoader;
+using Restitutor.Core;
 using Il2CppClient.Manager;
 using Il2CppClient.PlayerStore;
 using Il2CppCore.InputSystem;
@@ -9,7 +10,7 @@ using Il2CppFairyGUI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[assembly: MelonInfo(typeof(Restitutor.Cheats.Interface.Host), "Restitutor Cheats Interface", "1.5.1", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.Cheats.Interface.Host), "Restitutor Cheats Interface", "1.6.0", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.Cheats.Interface;
 public sealed class Host : MelonMod {
@@ -49,26 +50,37 @@ public sealed class Host : MelonMod {
         if(!panels.Contains(panel)) return;
         panel.Reset(); ClearView(); panels.Remove(panel); errors.Remove(panel.Id);
     }
-    public static void Hook(HarmonyLib.Harmony harmony,Type owner,Type target,string method,string? before=null,string? after=null,string? final=null) {
-        var methods=target.GetMethods().Where(m=>m.Name==method).ToArray();
-        if(methods.Length!=1) throw new MissingMethodException(target.FullName,method);
-        HarmonyMethod? H(string? name)=>name==null ? null : new HarmonyMethod(owner.GetMethod(name,BindingFlags.Static|BindingFlags.NonPublic)!);
-        harmony.Patch(methods[0],H(before),H(after),finalizer:H(final));
-    }
+    // 1.6.0: registration through Restitutor.Core. Same lookup as 1.5.1 (inherited members included, name must be
+    // unique; checked against the interop metadata for every caller). Feature DLLs keep calling this unchanged.
+    public static void Hook(HarmonyLib.Harmony harmony,Type owner,Type target,string method,string? before=null,string? after=null,string? final=null)
+        => new HookSet(harmony,owner).Hook(target,method,prefix:before,postfix:after,finalizer:final,declaredOnly:false);
+    private static HookSet? hooks;
     public override void OnInitializeMelon() {
         log=LoggerInstance;
-        try {
+        // Everything that touches Restitutor.Core sits in Install(): without Restitutor.Core.dll in
+        // UserLibs the failure surfaces here and only the cheats stay disabled.
+        try { Install(); }
+        catch(FileNotFoundException ex) when(ex.FileName?.StartsWith("Restitutor.Core",StringComparison.Ordinal)==true)
+        { log.Error("Restitutor.Core.dll is missing from UserLibs; Cheats Interface stays disabled."); }
+    }
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void Install() {
+        if(!CoreInfo.Require(log,"0.2.0")) return;
+        hooks=new HookSet(HarmonyInstance,typeof(Host));
+        if(!hooks.InstallAll(log,"Cheats Interface install",() => {
             var path=Path.Combine(AppContext.BaseDirectory,"GameAssembly.dll");
             if(!File.Exists(path)) path=Path.Combine(Environment.CurrentDirectory,"GameAssembly.dll");
             using var file=File.OpenRead(path);
             if(Convert.ToHexString(SHA256.Create().ComputeHash(file))!="50D53D17829E3E77B9786EA42D998D1AD258F0653846524069F22E5E442EFFCA")
                 throw new InvalidOperationException("Unsupported GameAssembly baseline");
-            Hook(HarmonyInstance,typeof(Host),typeof(PlayerData),"Deserialize",nameof(ResetSession),nameof(Loaded));
-            Hook(HarmonyInstance,typeof(Host),typeof(WorldPortHoldDB),"InitHook",nameof(ResetSession));
-            Hook(HarmonyInstance,typeof(Host),typeof(PlayerDataManager),"ProcessArchiveInitialize",after:nameof(Ready));
-            Hook(HarmonyInstance,typeof(Host),typeof(InputSystemManager),"OnEventCaptureInput",nameof(Capture));
-            Enabled=true; log.Msg("Cheats Interface 1.5.1 loaded (window meshes redrawn only when their size changes). O = all cheats off/on (process lifetime), H = fold/unfold; per-panel width and mouse-wheel scrolling.");
-        } catch(Exception ex) { HarmonyInstance.UnpatchSelf(); log.Error(ex.ToString()); }
+            hooks!.Hook(typeof(PlayerData),"Deserialize",prefix:nameof(ResetSession),postfix:nameof(Loaded),declaredOnly:false);
+            hooks.Hook(typeof(WorldPortHoldDB),"InitHook",prefix:nameof(ResetSession),declaredOnly:false);
+            hooks.Hook(typeof(PlayerDataManager),"ProcessArchiveInitialize",postfix:nameof(Ready),declaredOnly:false);
+            // 1.6.0: shared Core input gate instead of an own prefix on InputSystemManager.OnEventCaptureInput.
+            hooks.Input("Cheats Interface",_ => Capture());
+            Enabled=true;
+        })) return;
+        log.Msg("Cheats Interface 1.6.0 loaded (Restitutor.Core "+CoreInfo.Version+", shared input gate; window meshes redrawn only when their size changes). O = all cheats off/on (process lifetime), H = fold/unfold; per-panel width and mouse-wheel scrolling.");
     }
     private static void Loaded(PlayerData __instance)=>Player=__instance;
     private static void Ready(PlayerDataManager __instance)=>Player=__instance.Data;
@@ -224,6 +236,6 @@ public sealed class Host : MelonMod {
             ClearView(); log.Error(ex.ToString());
         }
     }
-    public override void OnDeinitializeMelon() { Enabled=false; HarmonyInstance.UnpatchSelf(); ResetSession(); }
+    public override void OnDeinitializeMelon() { Enabled=false; if(hooks!=null) hooks.RemoveAll(); else HarmonyInstance.UnpatchSelf(); ResetSession(); }
 }
 

@@ -1,1 +1,1 @@
-<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Reference Remove="@(Reference)"/><Compile Include="../Interface/*.cs"/></ItemGroup></Project>
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Reference Remove="@(Reference)"/><Compile Include="../Interface/*.cs"/><Compile Include="../../Core/src/*.cs" Link="Core/%(Filename)%(Extension)"/></ItemGroup></Project>
