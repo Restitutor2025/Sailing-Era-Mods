@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>Restitutor_devil_fruits</AssemblyName>
-    <Version>0.1.2</Version>
+    <Version>0.1.3</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -18,4 +18,6 @@
     <Reference Include="Il2CppSystem"><HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\Il2CppSystem.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
+  <!-- Restitutor.Core ships separately in UserLibs; never copy it next to the mod. -->
+  <ItemGroup><ProjectReference Include="..\Core\Restitutor.Core.csproj"><Private>false</Private></ProjectReference></ItemGroup>
 </Project>

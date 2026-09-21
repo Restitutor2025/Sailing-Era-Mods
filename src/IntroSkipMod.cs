@@ -1,11 +1,12 @@
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Il2CppClient.UILogic.UILaunch;
 using Il2CppFairyGUI;
 using MelonLoader;
+using Restitutor.Core;
 using UnityEngine.Rendering;
 
-[assembly: MelonInfo(typeof(Restitutor.IntroSkipMod), "Restitutor fixes", "0.1.2", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.IntroSkipMod), "Restitutor fixes", "0.1.3", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 
 namespace Restitutor;
@@ -25,29 +26,32 @@ public sealed class IntroSkipMod : MelonMod
     {
         instance = this;
         StopSplash();
-        try
-        {
-            Patch(typeof(UILaunchView), "OnInit", nameof(RegisterLaunch), false);
-            Patch(typeof(UILaunchView), "HideHook", nameof(ReleaseLaunch), false);
-            Patch(typeof(UILaunchView), "UpdateHook", nameof(BeforeLaunchUpdate), true);
-            Patch(typeof(Transition), "_Play", nameof(AfterTransition), false);
-            LoggerInstance.Msg("Intro hooks ready: startup logos, health bulletin, disclaimer only.");
-        }
-        catch (Exception ex)
+        // Everything that touches Restitutor.Core sits in Install(): without Restitutor.Core.dll in
+        // UserLibs the failure surfaces here and only this mod stays disabled (original UI kept).
+        try { Install(); }
+        catch (FileNotFoundException ex) when (ex.FileName?.StartsWith("Restitutor.Core", StringComparison.Ordinal) == true)
         {
             disabled = true;
-            HarmonyInstance.UnpatchSelf();
-            LoggerInstance.Error($"Intro hooks disabled; original UI preserved: {ex}");
+            LoggerInstance.Error("Restitutor.Core.dll is missing from UserLibs; intro hooks disabled, original UI preserved.");
         }
     }
 
-    private void Patch(Type type, string name, string handler, bool prefix)
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void Install()
     {
-        var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-            .Where(m => m.Name == name).ToArray();
-        if (methods.Length != 1) throw new AmbiguousMatchException($"{type.FullName}.{name}: {methods.Length} methods");
-        var hook = new HarmonyMethod(typeof(IntroSkipMod).GetMethod(handler, BindingFlags.NonPublic | BindingFlags.Static)!);
-        HarmonyInstance.Patch(methods[0], prefix: prefix ? hook : null, postfix: prefix ? null : hook);
+        if (!CoreInfo.Require(LoggerInstance, "0.1.0")) { disabled = true; return; }
+        var hooks = new HookSet(HarmonyInstance, typeof(IntroSkipMod));
+        // declaredOnly: false keeps the 0.1.2 lookup (inherited members included); each name is unique.
+        if (hooks.InstallAll(LoggerInstance, "Intro hooks (original UI preserved)", () =>
+            {
+                hooks.Hook(typeof(UILaunchView), "OnInit", postfix: nameof(RegisterLaunch), declaredOnly: false);
+                hooks.Hook(typeof(UILaunchView), "HideHook", postfix: nameof(ReleaseLaunch), declaredOnly: false);
+                hooks.Hook(typeof(UILaunchView), "UpdateHook", prefix: nameof(BeforeLaunchUpdate), declaredOnly: false);
+                hooks.Hook(typeof(Transition), "_Play", postfix: nameof(AfterTransition), declaredOnly: false);
+            }))
+            LoggerInstance.Msg("Intro hooks ready (Restitutor.Core " + CoreInfo.Version + "): startup logos, health bulletin, disclaimer only.");
+        else
+            disabled = true;
     }
 
     private static void RegisterLaunch(UILaunchView __instance)

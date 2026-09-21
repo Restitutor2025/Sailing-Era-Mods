@@ -1,15 +1,16 @@
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using HarmonyLib;
 using MelonLoader;
 using MelonLoader.Utils;
+using Restitutor.Core;
 using Il2CppCharacter;
 using Il2CppClient.UILogic.UICharacter;
 using Il2CppFairyGUI;
 using Il2CppGyyx.Template;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(Restitutor.StatRank.EntryPoint), "Restitutor Additional Stat Rank", "0.1.5", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.StatRank.EntryPoint), "Restitutor Additional Stat Rank", "0.1.6", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.StatRank;
 
@@ -29,19 +30,24 @@ public sealed class EntryPoint : MelonMod {
 
     public override void OnInitializeMelon() {
         log=LoggerInstance;
-        try {
+        // Everything that touches Restitutor.Core sits in Install(): without Restitutor.Core.dll in
+        // UserLibs the failure surfaces here and only this mod stays disabled.
+        try { Install(); }
+        catch(FileNotFoundException ex) when(ex.FileName?.StartsWith("Restitutor.Core",StringComparison.Ordinal)==true)
+        { log.Error("Restitutor.Core.dll is missing from UserLibs; Stat Rank stays disabled."); }
+    }
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void Install() {
+        if(!CoreInfo.Require(log,"0.1.0")) return;
+        var hooks=new HookSet(HarmonyInstance,typeof(EntryPoint));
+        if(!hooks.InstallAll(log,"Stat Rank install",() => {
             using(var s=File.OpenRead(Path.Combine(MelonEnvironment.GameRootDirectory,"GameAssembly.dll")))
                 if(Convert.ToHexString(SHA256.Create().ComputeHash(s))!=Baseline) throw new InvalidOperationException("GameAssembly baseline differs; Stat Rank disabled.");
-            Patch(typeof(UICharacterView),"RefreshTipsRoleInfo",nameof(AfterRoleInfo));
-            Patch(typeof(UICharacterView),"HideHook",nameof(AfterHide));
-            enabled=true;
-            log.Msg("Stat Rank 0.1.5 loaded; 2 postfixes (UICharacterView.RefreshTipsRoleInfo, HideHook); read-only. Hover by cursor position while the sheet is open; tip alpha 0.8; [HoverTrace] removed.");
-        } catch(Exception ex) { HarmonyInstance.UnpatchSelf(); log.Error(ex.ToString()); }
-    }
-    private void Patch(Type type,string name,string postfix) {
-        var m=type.GetMethod(name,BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance|BindingFlags.DeclaredOnly,null,Type.EmptyTypes,null)
-            ?? throw new MissingMethodException(type.FullName,name);
-        HarmonyInstance.Patch(m,postfix:new HarmonyMethod(typeof(EntryPoint).GetMethod(postfix,BindingFlags.Static|BindingFlags.NonPublic)!));
+            hooks.Hook(typeof(UICharacterView),"RefreshTipsRoleInfo",postfix:nameof(AfterRoleInfo),args:Type.EmptyTypes);
+            hooks.Hook(typeof(UICharacterView),"HideHook",postfix:nameof(AfterHide),args:Type.EmptyTypes);
+        })) return;
+        enabled=true;
+        log.Msg("Stat Rank 0.1.6 loaded (Restitutor.Core "+CoreInfo.Version+"); 2 postfixes (UICharacterView.RefreshTipsRoleInfo, HideHook); read-only. Hover by cursor position while the sheet is open; tip alpha 0.8.");
     }
     private static void Fail(Exception ex) { if(lastError!=ex.Message){lastError=ex.Message;log.Error(ex.ToString());} }
 

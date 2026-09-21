@@ -235,3 +235,5 @@
 !/install-core-0.1.0.ps1
 !/install-core-0.1.0.bat
 !/push-core-0.1.0.bat
+!/core-batch-*.ps1
+!/core-batch-*.bat
