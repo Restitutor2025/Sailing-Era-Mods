@@ -1,0 +1,17 @@
+{"name":"core-batch-3","branch":"feat/core-input-gate",
+ "desc":"Restitutor.Core 0.2.0 (shared input gate) + Contribution 0.5.6, Tab Characters 0.6.12, Map 0.2.4 on the gate (behaviour unchanged), then commit and push.",
+ "rollback":"Core\\releases\\0.1.0 to UserLibs, Contribution\\releases\\0.5.5, TabCharacters\\releases\\0.6.11, Map\\candidates\\tab-only\\dist\\0.2.3 over the installed files (roll back all four together).",
+ "requires_merged":"refactor/core-batch-2",
+ "core_ok":["928E5F54948C12F769085780447F7E4647B14C86BA076EA0ABEEA7AC55E28027","36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+ "installs":[
+  ["Core\\releases\\0.2.0\\Restitutor.Core.dll","UserLibs\\Restitutor.Core.dll","36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+  ["Contribution\\releases\\0.5.6\\Restitutor_fixes_Contribution.dll","Mods\\Additional_Functions\\Restitutor_Additional_Contribution_Goods_Recognition.dll","0412DEEC4F2A8B18AC160B6962D56B3510ACC3B20416300062692F0602AAA45C"],
+  ["TabCharacters\\releases\\0.6.12\\Restitutor_Additional_Tab_Characters.dll","Mods\\Additional_Functions\\Restitutor_Additional_Tab_Characters.dll","0F9C4A6DD38EA19CA495B1FE9676B8FDC9A19F13374403994F2140DD7B1CF411"],
+  ["Map\\candidates\\tab-only\\dist\\0.2.4\\Restitutor_fixes_map.dll","Mods\\Bug_Fixes\\Restitutor_fixes_map.dll","C94E91615C300271CFFE10BC3D06081200EDFB32300B42465FB816DBE8F09597"]],
+ "commits":[
+  [["Core","docs/mods/core"],"feat(core): shared input gate, HookSet.Input/RemoveAll (0.2.0)","One Core prefix on InputSystemManager.OnEventCaptureInput; every registered handler runs, any false swallows the input, a throwing handler is logged once and allows. HookSet.RemoveAll removes a mod's hooks and handlers. Additive; mods built against 0.1.0 keep working. All mods rebuilt and all suites pass."],
+  [["InstantEntrance/tests","ItemRebuild/tests"],"test: Core 0.2.0 doubles for suites that compile Core sources",""],
+  [["Contribution","docs/mods/contribution"],"refactor(contribution): input capture on the Core gate (0.5.6)","Same handler logic; hooks through HookSet (declaredOnly: false as before). Requires Restitutor.Core 0.2.0."],
+  [["TabCharacters","docs/mods/tab-characters"],"refactor(tab-characters): input capture on the Core gate (0.6.12)","BookCapture registered on the gate; UnpatchSelf paths now RemoveHooks (hooks and handler). Requires Restitutor.Core 0.2.0."],
+  [["Map","docs/mods/map"],"refactor(map): input capture on the Core gate (0.2.4)","CaptureClose registered on the gate; hooks through per-handler HookSets on the same Harmony instance. Requires Restitutor.Core 0.2.0."],
+  [[".gitignore","tools","core-batch-3.ps1","core-batch-3.bat"],"chore: Core batch 3 script",""]]}
