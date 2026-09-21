@@ -1,0 +1,535 @@
+[
+  {
+    "source": "src/IntroSkipMod.cs",
+    "line": 30,
+    "type": "UILaunchView",
+    "method": "OnInit",
+    "registration": "Patch(typeof(UILaunchView), \"OnInit\", nameof(RegisterLaunch), false);",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UILaunch.UILaunchView::OnInit()",
+        "rva": "0xA24DA0"
+      }
+    ]
+  },
+  {
+    "source": "src/IntroSkipMod.cs",
+    "line": 31,
+    "type": "UILaunchView",
+    "method": "HideHook",
+    "registration": "Patch(typeof(UILaunchView), \"HideHook\", nameof(ReleaseLaunch), false);",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UILaunch.UILaunchView::HideHook()",
+        "rva": "0xA28F70"
+      }
+    ]
+  },
+  {
+    "source": "src/IntroSkipMod.cs",
+    "line": 32,
+    "type": "UILaunchView",
+    "method": "UpdateHook",
+    "registration": "Patch(typeof(UILaunchView), \"UpdateHook\", nameof(BeforeLaunchUpdate), true);",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UILaunch.UILaunchView::UpdateHook()",
+        "rva": "0xA27270"
+      }
+    ]
+  },
+  {
+    "source": "src/IntroSkipMod.cs",
+    "line": 33,
+    "type": "Transition",
+    "method": "_Play",
+    "registration": "Patch(typeof(Transition), \"_Play\", nameof(AfterTransition), false);",
+    "candidates": [
+      {
+        "signature": "System.Void FairyGUI.Transition::_Play(System.Int32,System.Single,System.Single,System.Single,FairyGUI.PlayCompleteCallback,System.Boolean)",
+        "rva": "0x181D2A0"
+      }
+    ]
+  },
+  {
+    "source": "TextSpeed/src/TextSpeedModule.cs",
+    "line": 35,
+    "type": "UISettingView",
+    "method": "OnVideoSettingItemRender",
+    "registration": "Hook(typeof(UISettingView), \"OnVideoSettingItemRender\", typeof(OptionsRow), nameof(OptionsRow.BeforeRender), nameof(OptionsRow.AfterRender));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UISystemSetting.UISettingView::OnVideoSettingItemRender(System.Int32,FairyGUI.GObject)",
+        "rva": "0x64EA10"
+      }
+    ]
+  },
+  {
+    "source": "TextSpeed/src/TextSpeedModule.cs",
+    "line": 36,
+    "type": "UIDialogView",
+    "method": "OnInit",
+    "registration": "Hook(typeof(UIDialogView), \"OnInit\", typeof(TextSpeedModule), null, nameof(RegisterDialog));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIDialog.UIDialogView::OnInit()",
+        "rva": "0x1347D10"
+      }
+    ]
+  },
+  {
+    "source": "TextSpeed/src/TextSpeedModule.cs",
+    "line": 38,
+    "type": "UIDialogView",
+    "method": "StartEffect",
+    "registration": "Hook(typeof(UIDialogView), \"StartEffect\", typeof(TextSpeedModule), nameof(RegisterDialog), null);",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIDialog.UIDialogView::StartEffect()",
+        "rva": "0x1349100"
+      }
+    ]
+  },
+  {
+    "source": "TextSpeed/src/TextSpeedModule.cs",
+    "line": 39,
+    "type": "UIDialogView",
+    "method": "HideHook",
+    "registration": "Hook(typeof(UIDialogView), \"HideHook\", typeof(TextSpeedModule), null, nameof(ReleaseDialog));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIDialog.UIDialogView::HideHook()",
+        "rva": "0x134EBC0"
+      }
+    ]
+  },
+  {
+    "source": "TextSpeed/src/TextSpeedModule.cs",
+    "line": 40,
+    "type": "TypingEffectObject",
+    "method": "Start",
+    "registration": "Hook(typeof(TypingEffectObject), \"Start\", typeof(TextSpeedModule), null, nameof(AfterStart));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.Utils.TypingEffectObject::Start(System.Action,System.String,System.Single,System.Single)",
+        "rva": "0x69C080"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/FogLifetime.cs",
+    "line": 14,
+    "type": "UIMapCtrl",
+    "method": "InitUIMask",
+    "registration": "EntryPoint.Hook(typeof(UIMapCtrl), \"InitUIMask\", typeof(FogLifetime), nameof(BeforeInit), nameof(AfterInit));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapCtrl::InitUIMask()",
+        "rva": "0x5D4410"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/FogLifetime.cs",
+    "line": 15,
+    "type": "PlayerAreaDB",
+    "method": "Deserialize",
+    "registration": "EntryPoint.Hook(typeof(PlayerAreaDB), \"Deserialize\", typeof(FogLifetime), nameof(Reset));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.PlayerStore.PlayerAreaDB::Deserialize(Client.Manager.PlayerDataSerializer)",
+        "rva": "0x785FF0"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/FogLifetime.cs",
+    "line": 17,
+    "type": "PlayerAreaDB",
+    "method": "InitHook",
+    "registration": "EntryPoint.Hook(typeof(PlayerAreaDB), \"InitHook\", typeof(FogLifetime), nameof(Reset));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.PlayerStore.PlayerAreaDB::InitHook()",
+        "rva": "0x786270"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/FogLifetime.cs",
+    "line": 18,
+    "type": "MapMaskManager",
+    "method": "Dispose",
+    "registration": "EntryPoint.Hook(typeof(MapMaskManager), \"Dispose\", typeof(FogLifetime), nameof(Reset));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.Manager.MapMaskManager::Dispose()",
+        "rva": "0x6B6AF0"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/FogLifetime.cs",
+    "line": 19,
+    "type": "MapMaskManager",
+    "method": "SetMaskData",
+    "registration": "EntryPoint.Hook(typeof(MapMaskManager), \"SetMaskData\", typeof(FogLifetime), nameof(Reset));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.Manager.MapMaskManager::SetMaskData(System.Byte[])",
+        "rva": "0x6B6CD0"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 34,
+    "type": "UISailLineCtrl",
+    "method": "ShowHook",
+    "registration": "EntryPoint.Hook(typeof(UISailLineCtrl), \"ShowHook\", typeof(UnifiedRoute), after: nameof(Request));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UISailReady.UISailLineCtrl::ShowHook()",
+        "rva": "0xD2FE40"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 35,
+    "type": "UISailLineCtrl",
+    "method": "CloseHook",
+    "registration": "EntryPoint.Hook(typeof(UISailLineCtrl), \"CloseHook\", typeof(UnifiedRoute), before: nameof(PlannerClosing));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UISailReady.UISailLineCtrl::CloseHook()",
+        "rva": "0xD35060"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 36,
+    "type": "UISailLineCtrl",
+    "method": "OnAction_A",
+    "registration": "EntryPoint.Hook(typeof(UISailLineCtrl), \"OnAction_A\", typeof(UnifiedRoute), before: nameof(PlannerSelect), args: Type.EmptyTypes);",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UISailReady.UISailLineCtrl::OnAction_A()",
+        "rva": "0xD31E40"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 37,
+    "type": "UISailLineCtrl",
+    "method": "OnAction_A",
+    "registration": "EntryPoint.Hook(typeof(UISailLineCtrl), \"OnAction_A\", typeof(UnifiedRoute), before: nameof(BeforeNativeSelect), after: nameof(AfterNativeSelect), args: new[] { typeof(int) });",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UISailReady.UISailLineCtrl::OnAction_A(System.Int32)",
+        "rva": "0xD31EE0"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 38,
+    "type": "UISailLineCtrl",
+    "method": "OnAction_B",
+    "registration": "EntryPoint.Hook(typeof(UISailLineCtrl), \"OnAction_B\", typeof(UnifiedRoute), after: nameof(PlannerChanged));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UISailReady.UISailLineCtrl::OnAction_B()",
+        "rva": "0xD34570"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 39,
+    "type": "UISailLineCtrl",
+    "method": "ClearSelectPort",
+    "registration": "EntryPoint.Hook(typeof(UISailLineCtrl), \"ClearSelectPort\", typeof(UnifiedRoute), after: nameof(PlannerChanged));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UISailReady.UISailLineCtrl::ClearSelectPort()",
+        "rva": "0xD333B0"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 40,
+    "type": "UISailLineCtrl",
+    "method": "AutoSail",
+    "registration": "EntryPoint.Hook(typeof(UISailLineCtrl), \"AutoSail\", typeof(UnifiedRoute), before: nameof(BeforeDeparture));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UISailReady.UISailLineCtrl::AutoSail()",
+        "rva": "0xD33F40"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 41,
+    "type": "UIMapCtrl",
+    "method": "CloseHook",
+    "registration": "EntryPoint.Hook(typeof(UIMapCtrl), \"CloseHook\", typeof(UnifiedRoute), before: nameof(MapClosing));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapCtrl::CloseHook()",
+        "rva": "0x5DB470"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 42,
+    "type": "UIMapCtrl",
+    "method": "DisposeHook",
+    "registration": "EntryPoint.Hook(typeof(UIMapCtrl), \"DisposeHook\", typeof(UnifiedRoute), before: nameof(MapClosing));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapCtrl::DisposeHook()",
+        "rva": "0x5D3C30"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 43,
+    "type": "UIBase",
+    "method": "get_IsInputActive",
+    "registration": "EntryPoint.Hook(typeof(UIBase), \"get_IsInputActive\", typeof(UnifiedRoute), before: nameof(FilterInput));",
+    "candidates": [
+      {
+        "signature": "System.Boolean Core.NewUISystem.UIBase::get_IsInputActive()",
+        "rva": "0xB106A0"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 44,
+    "type": "UIMapLineCtrl",
+    "method": "UpdateUI",
+    "registration": "EntryPoint.Hook(typeof(UIMapLineCtrl), \"UpdateUI\", typeof(UnifiedRoute), before: nameof(FilterOldMapUpdate));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapLineCtrl::UpdateUI()",
+        "rva": "0x5E9990"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 45,
+    "type": "UIMapLineCtrl",
+    "method": "SetFocusPortIcon",
+    "registration": "EntryPoint.Hook(typeof(UIMapLineCtrl), \"SetFocusPortIcon\", typeof(UnifiedRoute), before: nameof(FocusPort));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapLineCtrl::SetFocusPortIcon(System.Int32)",
+        "rva": "0x5EAB10"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 46,
+    "type": "UIMapLineCtrl",
+    "method": "SetMapFocusOnPlayer",
+    "registration": "EntryPoint.Hook(typeof(UIMapLineCtrl), \"SetMapFocusOnPlayer\", typeof(UnifiedRoute), before: nameof(FocusPlayer));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapLineCtrl::SetMapFocusOnPlayer()",
+        "rva": "0x5E9480"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 47,
+    "type": "UIMapLineCtrl",
+    "method": "EnterArea",
+    "registration": "EntryPoint.Hook(typeof(UIMapLineCtrl), \"EnterArea\", typeof(UnifiedRoute), before: nameof(EnterArea));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapLineCtrl::EnterArea(System.Int32)",
+        "rva": "0x5E9350"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 48,
+    "type": "UIMapLineCtrl",
+    "method": "GetCurrentSelectPort",
+    "registration": "EntryPoint.Hook(typeof(UIMapLineCtrl), \"GetCurrentSelectPort\", typeof(UnifiedRoute), before: nameof(CurrentRoutePort));",
+    "candidates": [
+      {
+        "signature": "Client.UILogic.UIMap.UIMapIcon.UIMapLineHarbourIcon Client.UILogic.UIMap.UIMapLineCtrl::GetCurrentSelectPort()",
+        "rva": "0x5EAF10"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 49,
+    "type": "UIMapLineCtrl",
+    "method": "GetSelectHarbourId",
+    "registration": "EntryPoint.Hook(typeof(UIMapLineCtrl), \"GetSelectHarbourId\", typeof(UnifiedRoute), before: nameof(CurrentRoutePortId));",
+    "candidates": [
+      {
+        "signature": "System.Int32 Client.UILogic.UIMap.UIMapLineCtrl::GetSelectHarbourId()",
+        "rva": "0x5EAC80"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 50,
+    "type": "UIMapCtrl",
+    "method": "OnAction_A",
+    "registration": "EntryPoint.Hook(typeof(UIMapCtrl), \"OnAction_A\", typeof(UnifiedRoute), before: nameof(SuppressMapAction));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapCtrl::OnAction_A()",
+        "rva": "0x5DD290"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 53,
+    "type": "UIMapCtrl",
+    "method": "OnAction_B",
+    "registration": "EntryPoint.Hook(typeof(UIMapCtrl), \"OnAction_B\", typeof(UnifiedRoute), before: nameof(SuppressMapAction));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapCtrl::OnAction_B()",
+        "rva": "0x5DD430"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 54,
+    "type": "UIMapCtrl",
+    "method": "OnAction_X",
+    "registration": "EntryPoint.Hook(typeof(UIMapCtrl), \"OnAction_X\", typeof(UnifiedRoute), before: nameof(SuppressMapAction));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapCtrl::OnAction_X()",
+        "rva": "0x5DD130"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 55,
+    "type": "UIMapCtrl",
+    "method": "ClickPortCheckLine",
+    "registration": "EntryPoint.Hook(typeof(UIMapCtrl), \"ClickPortCheckLine\", typeof(UnifiedRoute), before: nameof(ClickPort));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapCtrl::ClickPortCheckLine(System.Int32)",
+        "rva": "0x5E0820"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 56,
+    "type": "UIMapCtrl",
+    "method": "SetLane",
+    "registration": "EntryPoint.Hook(typeof(UIMapCtrl), \"SetLane\", typeof(UnifiedRoute), before: nameof(SetRouteLanes), args: Type.EmptyTypes);",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapCtrl::SetLane()",
+        "rva": "0x5D9E30"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 57,
+    "type": "UIMapCtrl",
+    "method": "UpdateUI",
+    "registration": "EntryPoint.Hook(typeof(UIMapCtrl), \"UpdateUI\", typeof(UnifiedRoute), after: nameof(MapUpdated));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapCtrl::UpdateUI()",
+        "rva": "0x5DEE50"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 58,
+    "type": "UIMapHandler",
+    "method": "TouchPortOrAreaListUI",
+    "registration": "EntryPoint.Hook(typeof(UIMapHandler), \"TouchPortOrAreaListUI\", typeof(UnifiedRoute), after: nameof(OverPlannerList));",
+    "candidates": [
+      {
+        "signature": "System.Boolean Client.UILogic.UIMap.UIMapHandler::TouchPortOrAreaListUI()",
+        "rva": "0x5E3750"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 59,
+    "type": "UIMapView",
+    "method": "Refresh",
+    "registration": "EntryPoint.Hook(typeof(UIMapView), \"Refresh\", typeof(UnifiedRoute), after: nameof(MapRefreshed));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapView::Refresh()",
+        "rva": "0x7BC1A0"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 60,
+    "type": "UIMapHarbourIcon",
+    "method": "UpdateInfo",
+    "registration": "EntryPoint.Hook(typeof(UIMapHarbourIcon), \"UpdateInfo\", typeof(UnifiedRoute), after: nameof(PortRefreshed));",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapIcon.UIMapHarbourIcon::UpdateInfo()",
+        "rva": "0x5E47C0"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 61,
+    "type": "UIMapHarbourIcon",
+    "method": "_InitComponent_b__16_0",
+    "registration": "EntryPoint.Hook(typeof(UIMapHarbourIcon), \"_InitComponent_b__16_0\", typeof(UnifiedRoute), before: nameof(PortClicked), args: Type.EmptyTypes);",
+    "candidates": [
+      {
+        "signature": "System.Void Client.UILogic.UIMap.UIMapIcon.UIMapHarbourIcon::<InitComponent>b__16_0()",
+        "rva": "0x5E6670"
+      }
+    ]
+  },
+  {
+    "source": "Map/src/UnifiedRoute.cs",
+    "line": 62,
+    "type": "InputSystemManager",
+    "method": "OnEventCaptureInput",
+    "registration": "EntryPoint.Hook(typeof(InputSystemManager), \"OnEventCaptureInput\", typeof(UnifiedRoute), before: nameof(CaptureClose));",
+    "candidates": [
+      {
+        "signature": "System.Void Core.InputSystem.InputSystemManager::OnEventCaptureInput(UnityEngine.InputSystem.InputAction/CallbackContext)",
+        "rva": "0x8C50C0"
+      }
+    ]
+  }
+]
