@@ -1,8 +1,9 @@
 using System.Diagnostics;
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Il2CppCore.InputSystem;
 using MelonLoader;
+using Restitutor.Core;
 using Il2CppClient.Manager;
 using Il2CppClient.PlayerStore;
 using Il2CppClient.Const;
@@ -10,7 +11,7 @@ using Il2CppClient.UILogic.UIGovHouse;
 using Il2CppClient.UILogic.UIMarket;
 using SceneManager = Il2CppCore.SceneSystem.SceneManager;
 
-[assembly: MelonInfo(typeof(Restitutor.Contribution.EntryPoint), "Restitutor fixes Contribution", "0.5.5", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.Contribution.EntryPoint), "Restitutor fixes Contribution", "0.5.6", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.Contribution;
 public sealed class EntryPoint : MelonMod
@@ -33,7 +34,19 @@ public sealed class EntryPoint : MelonMod
     public override void OnInitializeMelon()
     {
         Log = LoggerInstance; mainThread = Environment.CurrentManagedThreadId;
-        try
+        // Everything that touches Restitutor.Core sits in Install(): without Restitutor.Core.dll in
+        // UserLibs the failure surfaces here and only this mod stays disabled.
+        try { Install(); }
+        catch (FileNotFoundException ex) when (ex.FileName?.StartsWith("Restitutor.Core", StringComparison.Ordinal) == true)
+        { Enabled = false; Log.Error("Restitutor.Core.dll is missing from UserLibs; Contribution stays disabled."); }
+    }
+    private static HookSet? hooks;
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void Install()
+    {
+        if (!CoreInfo.Require(Log, "0.2.0")) { Enabled = false; return; }
+        hooks = new HookSet(HarmonyInstance, typeof(EntryPoint));
+        if (!hooks.InstallAll(Log, "Initialization", () =>
         {
             foreach (var second in new[] { typeof(int), typeof(int).MakeByRefType() })
                 Hook(typeof(WorldPortHoldDB), "UpdateInfluence", nameof(BeforeInfluence), nameof(AfterInfluence), args: new[] { typeof(int), second });
@@ -48,20 +61,15 @@ public sealed class EntryPoint : MelonMod
             Hook(typeof(UIGovHouseEntryCtrl), "ShowView", nameof(GuardLicence));
             Hook(typeof(GameEffectManager), "AddGameEffectInstant", nameof(EffectBefore));
             Hook(typeof(UIMarketCtrl), "SetMarketGoods", after: nameof(MarketGoods));
-            Hook(typeof(InputSystemManager), "OnEventCaptureInput", nameof(CaptureInput));
+            // 0.5.6: shared Core input gate instead of an own prefix on InputSystemManager.OnEventCaptureInput.
+            hooks!.Input("Contribution", _ => CaptureInput());
             Enabled = true;
-            Log.Msg("Contribution 0.5.5 loaded (harbor HUD check and benefit text on events: focus, main UI, city/port, notices; no per-frame pending copy). City benefits visible only on focused harbor main screen.");
-        }
-        catch (Exception ex) { Enabled = false; HarmonyInstance.UnpatchSelf(); Log.Error("Initialization failed: " + ex); }
+        })) { Enabled = false; return; }
+        Log.Msg("Contribution 0.5.6 loaded (Restitutor.Core " + CoreInfo.Version + ", shared input gate; harbor HUD check and benefit text on events: focus, main UI, city/port, notices). City benefits visible only on focused harbor main screen.");
     }
+    // Same lookup as 0.5.5: inherited members included (declaredOnly: false), exact parameter types when given.
     private void Hook(Type type, string method, string? before = null, string? after = null, string? finalizer = null, Type[]? args = null)
-    {
-        var candidates = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-            .Where(m => m.Name == method && (args == null || m.GetParameters().Select(p => p.ParameterType).SequenceEqual(args))).ToArray();
-        if (candidates.Length != 1) throw new MissingMethodException(type.FullName, method + " count=" + candidates.Length);
-        HarmonyMethod? Handler(string? name) => name == null ? null : new HarmonyMethod(typeof(EntryPoint).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static));
-        HarmonyInstance.Patch(candidates[0], Handler(before), Handler(after), finalizer: Handler(finalizer));
-    }
+        => hooks!.Hook(type, method, prefix: before, postfix: after, finalizer: finalizer, args: args, declaredOnly: false);
     internal static void Error(string context, Exception ex) { if (errors.Add(context)) Log.Error(context + ": " + ex); }
     private static void Reset()
     {
@@ -194,7 +202,7 @@ public sealed class EntryPoint : MelonMod
     private static bool CaptureInput() => !Enabled || !Overlay.BlocksInput;
     private static void EffectBefore(string __1,ref int __3) { if(Engine.GrantPort.HasValue && __1=="LicenceIncreaseCargoProduction")__3=Engine.GrantPort.Value; }
     private static void MarketGoods(UIMarketCtrl __instance) => LiveViews.MarketBuilt(__instance);
-    public override void OnDeinitializeMelon() { Enabled = false; HarmonyInstance.UnpatchSelf(); Reset(); }
+    public override void OnDeinitializeMelon() { Enabled = false; if (hooks != null) hooks.RemoveAll(); else HarmonyInstance.UnpatchSelf(); Reset(); }
 }
 
 
