@@ -1,0 +1,23 @@
+using Restitutor.Cheats.Items;
+int checks=0;
+void Check(bool c,string n){checks++;if(!c)throw new Exception($"Check {checks}: {n}");}
+Check(Rules.TabOf(31,11001)==Tab.Equipment&&Rules.TabOf(34,1)==Tab.Equipment,"equipment types");
+Check(Rules.TabOf(35,1)==null&&Rules.TabOf(36,1)==null,"station tools are not equipment");
+Check(Rules.TabOf(72,1)==Tab.Book&&Rules.TabOf(73,1)==Tab.Book&&Rules.TabOf(71,1)==Tab.Book,"book types");
+Check(Rules.TabOf(1,1)==null&&Rules.TabOf(211,1)==null,"others excluded");
+Check(DevilFruits.Ids.Length==5&&DevilFruits.Ids.All(id=>Rules.TabOf(9900,id)==Tab.DevilFruit),"fruit ids by constant");
+Check(Rules.TabOf(31,990003)==Tab.DevilFruit,"fruit id wins over type");
+var items=new List<Entry>{new(3,"낡은 검","무기",31),new(1,"항해술 입문","스킬북",72),new(2,"Silver Ring","도구",34)};
+var sorted=Rules.Sort(Tab.Equipment,items.Where(e=>e.Type!=72));
+Check(sorted[0].Type==31&&sorted[1].Type==34,"sorted by type order");
+Check(Rules.Filter(items,"검").Single().Id==3,"korean contains");
+Check(Rules.Filter(items,"silver").Single().Id==2,"case-insensitive");
+Check(Rules.Filter(items,"2").Single().Id==2,"digits match id");
+Check(Rules.Filter(items,"  ").Count==3,"blank query");
+Check(Rules.Pages(0)==1&&Rules.Pages(16)==1&&Rules.Pages(17)==2,"pages");
+Check(Rules.ClampPage(-1,40)==0&&Rules.ClampPage(9,40)==2,"clamp page");
+var many=Enumerable.Range(0,40).ToList();
+Check(Rules.PageOf(many,2).SequenceEqual(new[]{32,33,34,35,36,37,38,39}),"last page");
+Check(Rules.Slot(0)==(0f,0f)&&Rules.Slot(7)==(0f,7*Rules.RowHeight)&&Rules.Slot(8)==(Rules.ColumnWidth+Rules.ColumnGap,0f),"slots");
+Check(Rules.ColumnWidth*2+Rules.ColumnGap==Rules.PanelWidth,"columns fill panel");
+Console.WriteLine($"PASS {checks} item checks: tab classification, fruit constants, sort, search, paging, layout.");
