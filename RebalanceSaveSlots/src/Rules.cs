@@ -26,4 +26,15 @@ public static class Rules
     }
 
     public static bool IsAuto(int index) => index >= 0 && index < AutoCount;
+
+    /// <summary>Rows the game never had. RenderStorageItem gives row i an enter animation delayed by i*0.1 s
+    /// (aniReset then aniruchang); the game's Refresh shrinks the list to 10 and this mod grows it back,
+    /// which removes rows 10+ from the stage mid-delay and FairyGUI stops their transitions in the hidden
+    /// state. These rows are therefore shown at their end state right away.</summary>
+    public static bool ShowInstantly(int index) => index >= OriginalCount && index < Total;
+
+    /// <summary>Selection the game's Refresh drops: GList.selectedIndex = model index while the list holds
+    /// only 10 rows clears the selection for index 10+. Returns the index to re-apply, or -1.</summary>
+    public static int ReselectAfterGrow(int selected, int listCount) =>
+        selected >= OriginalCount && selected < listCount ? selected : -1;
 }
