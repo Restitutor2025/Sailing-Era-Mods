@@ -1,5 +1,8 @@
 # Stat Rank — CURRENT
 
+## 0.2.0 (2026-09-22) — Rebalance Growth 누적 % 표시, 게임 확인 전
+[0.2.0](0.2.0.md). Rebalance Growth 가 동작하면 팁이 레벨당 %·누적 %로 바뀜.
+
 ## 0.1.6 (2026-09-22) — Restitutor.Core 전환, 기능 변경 없음, 게임 확인 전
 [0.1.6](0.1.6.md). 필요: `UserLibs\Restitutor.Core.dll` 0.1.0 이상. 이전 소스 `StatRank/archive/0.1.5/`.
 

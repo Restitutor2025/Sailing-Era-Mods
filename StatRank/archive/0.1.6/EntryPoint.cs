@@ -10,7 +10,7 @@ using Il2CppFairyGUI;
 using Il2CppGyyx.Template;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(Restitutor.StatRank.EntryPoint), "Restitutor Additional Stat Rank", "0.2.0", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.StatRank.EntryPoint), "Restitutor Additional Stat Rank", "0.1.6", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.StatRank;
 
@@ -26,22 +26,7 @@ public sealed class EntryPoint : MelonMod {
     private static GObject? tipAnchor;
     private static string? lastError;
     // Row data per grade label (keyed by native pointer; labels live under the native sheet).
-    private static readonly Dictionary<IntPtr,string[]> rows=new();
-    // 0.2.0: Restitutor Rebalance Growth (0.3.0+) replaces the roll with cumulative growth. Its public static
-    // GrowthActive tells whether its rules run (false when it is missing or disabled by its GameAssembly check):
-    // then this tip shows per-level % and the stored progress instead of the +2/+1/+0 odds.
-    private static System.Reflection.PropertyInfo? growthFlag;
-    private static bool growthLooked;
-    private static bool GrowthActive {
-        get {
-            if(!growthLooked) {
-                growthLooked=true;
-                var m=MelonBase.RegisteredMelons.FirstOrDefault(x=>x.Info.Name=="Restitutor Rebalance Growth");
-                growthFlag=m?.MelonAssembly?.Assembly?.GetType("Restitutor.RebalanceGrowth.EntryPoint")?.GetProperty("GrowthActive");
-            }
-            try { return growthFlag?.GetValue(null) is true; } catch { return false; }
-        }
-    }
+    private static readonly Dictionary<IntPtr,(string letter,int success,int perfect)> rows=new();
 
     public override void OnInitializeMelon() {
         log=LoggerInstance;
@@ -62,7 +47,7 @@ public sealed class EntryPoint : MelonMod {
             hooks.Hook(typeof(UICharacterView),"HideHook",postfix:nameof(AfterHide),args:Type.EmptyTypes);
         })) return;
         enabled=true;
-        log.Msg("Stat Rank 0.2.0 loaded (Restitutor.Core "+CoreInfo.Version+"); 2 postfixes (UICharacterView.RefreshTipsRoleInfo, HideHook); read-only. Hover by cursor position while the sheet is open; tip alpha 0.8.");
+        log.Msg("Stat Rank 0.1.6 loaded (Restitutor.Core "+CoreInfo.Version+"); 2 postfixes (UICharacterView.RefreshTipsRoleInfo, HideHook); read-only. Hover by cursor position while the sheet is open; tip alpha 0.8.");
     }
     private static void Fail(Exception ex) { if(lastError!=ex.Message){lastError=ex.Message;log.Error(ex.ToString());} }
 
@@ -82,30 +67,18 @@ public sealed class EntryPoint : MelonMod {
             sheetOpen=true;
             var model=__instance._model;
             Hero? hero=null;
-            Il2CppClient.PlayerStore.PlayerRoleData? roleData=null;
             if(model!=null && model.ListRole!=null && model.RoleIndex>=0 && model.RoleIndex<model.ListRole.Count) {
                 var data=model.ListRole[model.RoleIndex];
-                if(data!=null && !data.isSeaman) { roleData=data.HeroData; hero=roleData?.GetHeroTemplate(); }
+                if(data!=null && !data.isSeaman) hero=data.HeroData?.GetHeroTemplate();
             }
-            bool growth=GrowthActive && roleData!=null;
-            // physical, perceive, craft, knowledge, charm: ERolePropertyType 1,3,2,5,4 and <Stat>_Exp.
-            int[] ids={1,3,2,5,4};
-            int[] progress=growth ? new[]{roleData!.Physical_Exp,roleData.Perceive_Exp,roleData.Craft_Exp,roleData.Knowledge_Exp,roleData.Charm_Exp} : new int[5];
-            int cap=growth ? Il2CppClient.UILogic.UIHeroLevelUp.UIHeroLevelUpModel.MaxProp : 0;
-            int k=-1;
             foreach(var prop in new[]{__instance.Physical,__instance.Perceive,__instance.Craft,__instance.Knowledge,__instance.Charm})
                 if(prop!=null && !prop.isDisposed) { var old=Find(prop); if(old!=null) old.visible=false; }
             if(hero==null) return;
-            foreach(var (prop,grade) in Rows(__instance,hero)) {
-                k++;
+            foreach(var (prop,growth) in Rows(__instance,hero)) {
                 if(prop==null || prop.isDisposed) continue;
-                var type=TemplateManager.GetRoleGrowthType(grade);
+                var type=TemplateManager.GetRoleGrowthType(growth);
                 if(type==null) continue;
-                string letter=Rules.Letter(type.code,grade);
-                if(growth) {
-                    int value=roleData!.GetPointProperty(ids[k])?.BaseData ?? 0;
-                    Place(prop,letter,Rules.GrowthRow(letter,progress[k],value>=cap));
-                } else Place(prop,letter,Rules.Row(letter,type.successRate,type.perfectRate));
+                Place(prop,Rules.Letter(type.code,growth),type.successRate,type.perfectRate);
             }
             labels.RemoveAll(l=>l==null || l.isDisposed);
         } catch(Exception ex) { Fail(ex); }
@@ -121,7 +94,7 @@ public sealed class EntryPoint : MelonMod {
         for(int i=0;i<parent.numChildren;i++) { var c=parent.GetChildAt(i); if(c.name==LabelName) return c.TryCast<GTextField>(); }
         return null;
     }
-    private static void Place(UICom_Prop prop,string letter,string[] row) {
+    private static void Place(UICom_Prop prop,string letter,int success,int perfect) {
         var title=prop.TexPropTitle; var parent=title?.parent;
         if(title==null || parent==null) return;
         var label=Find(prop);
@@ -138,7 +111,7 @@ public sealed class EntryPoint : MelonMod {
         var src=title.textFormat; var f=label.textFormat;
         f.font=src.font;f.size=src.size;f.color=src.color;f.bold=src.bold;f.align=AlignType.Left;label.textFormat=f;
         label.text=letter;
-        rows[label.Pointer]=row;
+        rows[label.Pointer]=(letter,success,perfect);
         // One space after the visible title text.
         float gap=Math.Max(4,src.size*.35f);
         label.SetXY(title.x+title.textWidth+gap,title.y+(title.height-label.height)/2);
@@ -147,10 +120,9 @@ public sealed class EntryPoint : MelonMod {
 
     private static void ShowTip(GTextField anchor) {
         if(anchor.isDisposed || !anchor.onStage) return;
-        if(!rows.TryGetValue(anchor.Pointer,out var row)) return;
+        if(!rows.TryGetValue(anchor.Pointer,out var info)) return;
         HideTip();
-        var header=row.Length==Rules.GrowthHeader.Length ? Rules.GrowthHeader : Rules.Header;
-        int cols=header.Length;
+        var row=Rules.Row(info.letter,info.success,info.perfect);
         var (bg,format)=NativeStyle();
         var root=new GComponent{name="RestitutorStatRankTip",touchable=false,sortingOrder=31950};
         GRoot.inst.AddChild(root);
@@ -158,22 +130,22 @@ public sealed class EntryPoint : MelonMod {
         // proportion whatever the UI scale.
         float fs=format!=null && format.size>0 ? format.size : 20;
         float pad=fs*.9f,gap=fs*1.3f,lineGap=fs*.3f,offset=fs*.6f;
-        var cells=new GTextField[2,cols];
-        for(int r=0;r<2;r++) for(int c=0;c<cols;c++) {
+        var cells=new GTextField[2,5];
+        for(int r=0;r<2;r++) for(int c=0;c<5;c++) {
             var t=new GTextField{autoSize=AutoSizeType.Both,singleLine=true,touchable=false};
             var f=t.textFormat;
             if(format!=null){f.font=format.font;f.size=format.size;f.color=format.color;} else {f.font=UIConfig.defaultFont;f.size=20;f.color=Color.white;}
-            f.align=AlignType.Left;t.textFormat=f;t.text=r==0?header[c]:row[c];
+            f.align=AlignType.Left;t.textFormat=f;t.text=r==0?Rules.Header[c]:row[c];
             cells[r,c]=t;
         }
         float x=pad,h=0;
-        float[] widths=new float[cols];
-        for(int c=0;c<cols;c++) widths[c]=Math.Max(cells[0,c].width,cells[1,c].width);
+        float[] widths=new float[5];
+        for(int c=0;c<5;c++) widths[c]=Math.Max(cells[0,c].width,cells[1,c].width);
         for(int r=0;r<2;r++) h=Math.Max(h,cells[r,0].height);
-        float width=pad*2+widths.Sum()+gap*(cols-1), height=pad*2+h*2+lineGap;
+        float width=pad*2+widths.Sum()+gap*4, height=pad*2+h*2+lineGap;
         if(bg!=null){bg.touchable=false;root.AddChild(bg);bg.SetSize(width,height);}
         else { var g=new GGraph{touchable=false};g.DrawRect(width,height,1,new Color(0,0,0,1),new Color(.12f,.14f,.15f,.94f));root.AddChild(g); }
-        for(int c=0;c<cols;c++) {
+        for(int c=0;c<5;c++) {
             for(int r=0;r<2;r++){ var t=cells[r,c];root.AddChild(t);t.SetXY(x,pad+r*(h+lineGap)); }
             x+=widths[c]+gap;
         }
