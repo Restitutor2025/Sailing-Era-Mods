@@ -9,7 +9,7 @@ using Il2CppClient.UILogic.UICharacter;
 using Il2CppClient.UILogic.UIHeroLevelUp;
 using Il2CppGyyx.Template;
 
-[assembly: MelonInfo(typeof(Restitutor.DevilFruits.EntryPoint), "Restitutor Devil Fruits", "0.1.5", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.DevilFruits.EntryPoint), "Restitutor Devil Fruits", "0.1.3", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.DevilFruits;
 
@@ -17,7 +17,7 @@ namespace Restitutor.DevilFruits;
 // Item rows are added at runtime; the effect is recorded in the save (ListSkillBooks) and
 // re-applied to the shared Hero template on load. See docs/mods/devil-fruits/.
 public sealed partial class EntryPoint : MelonMod {
-    internal const string Version="0.1.5";
+    internal const string Version="0.1.3";
     private const string Baseline="50D53D17829E3E77B9786EA42D998D1AD258F0653846524069F22E5E442EFFCA";
     private static MelonLogger.Instance log=null!;
     private static bool enabled;
@@ -48,8 +48,6 @@ public sealed partial class EntryPoint : MelonMod {
             Patch(typeof(PlayerHoldRoleDB),"Deserialize",postfix:nameof(AfterRolesLoaded));
             Patch(typeof(PlayerHoldRoleDB),"InitHook",postfix:nameof(AfterRolesInit));
             Patch(typeof(UIHeroLevelUpCtrl),"OnClickBtnLevelUp",prefix:nameof(BeforeLevelUp));
-            // 0.1.5: the n-level path too (Rebalance Growth 0.3.0 slider uses it for every level-up).
-            Patch(typeof(UIHeroLevelUpCtrl),"OnClickBtnLevelUpFive",prefix:nameof(BeforeLevelUp));
             Patch(typeof(UICharacterView),"RefreshTipsRoleInfo",prefix:nameof(BeforeRoleInfo));
             Patch(typeof(UICharacterView),"HideHook",postfix:nameof(AfterHide));
             enabled=true;

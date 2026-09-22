@@ -74,7 +74,7 @@ public sealed partial class EntryPoint {
     // PlayerHoldRoleDB.Deserialize / InitHook postfixes: a save was loaded or a new game started.
     private static void AfterRolesLoaded(PlayerHoldRoleDB __instance)=>Resync(__instance,"roles loaded");
     private static void AfterRolesInit(PlayerHoldRoleDB __instance)=>Resync(__instance,"roles init");
-    // UIHeroLevelUpCtrl.OnClickBtnLevelUp / OnClickBtnLevelUpFive prefix: the level-up roll reads the template grades.
+    // UIHeroLevelUpCtrl.OnClickBtnLevelUp prefix: the level-up roll reads the template grades.
     private static void BeforeLevelUp() {
         try { Resync(Il2CppClient.UILogic.UICharacter.UICharacterCtrl.Data?.PlayerRole,"level up"); } catch(Exception ex) { Fail("level up",ex); }
     }
