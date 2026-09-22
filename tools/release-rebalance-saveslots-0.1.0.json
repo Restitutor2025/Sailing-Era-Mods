@@ -1,0 +1,10 @@
+{"name":"release-rebalance-saveslots-0.1.0","branch":"feat/rebalance-saveslots",
+ "desc":"New mod Rebalance SaveSlots 0.1.0: save slots 10 -> 101 (2 auto + 99 manual), then commit and push.",
+ "rollback":"delete Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll (saves beyond slot 10 stay on disk; the game shows only the first 10)",
+ "core_ok":["36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+ "session":"https://claude.ai/code/session_01GA2ihscBe7DquX5AQAzSpW",
+ "installs":[
+  ["RebalanceSaveSlots\\releases\\0.1.0\\Restitutor_Rebalance_SaveSlots.dll","Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll","41983074205AD95EFE6AF30BD145F075FB62E06D6DCCFB32C986105D1701F8E9"]],
+ "commits":[
+  [["RebalanceSaveSlots/Restitutor_Rebalance_SaveSlots.csproj","RebalanceSaveSlots/README.md","RebalanceSaveSlots/build.ps1","RebalanceSaveSlots/src/EntryPoint.cs","RebalanceSaveSlots/src/Rules.cs","RebalanceSaveSlots/tests/Program.cs","RebalanceSaveSlots/tests/Tests.csproj","docs/mods/rebalance-saveslots/0.1.0.md"],"feat(rebalance-saveslots): save slots 10 -> 101 (2 auto + 99 manual)","New mod Restitutor_Rebalance_SaveSlots 0.1.0 (Mods/Rebalance). Postfixes on StorageHistoryManager.InitializeStorageHistories and <LoadHistoryData>b__19_1 grow the history list to 101 and restore entries 10+ from the same HistoryJson (the game saves the whole list but loads only 10); UIStorageView.Refresh postfix sets listStorage.numItems to the list size. Save file format unchanged. Requires Restitutor.Core 0.1.0+."],
+  [["tools/release-rebalance-saveslots-0.1.0.json","release-rebalance-saveslots-0.1.0.ps1","release-rebalance-saveslots-0.1.0.bat"],"chore: release script for Rebalance SaveSlots 0.1.0",""]]}
