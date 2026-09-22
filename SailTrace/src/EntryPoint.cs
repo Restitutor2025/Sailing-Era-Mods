@@ -5,7 +5,7 @@ using MelonLoader.Utils;
 using Il2CppClient.WorldLogic.Scenes;
 using SceneManager = Il2CppCore.SceneSystem.SceneManager;
 
-[assembly: MelonInfo(typeof(Restitutor.SailTrace.EntryPoint), "Restitutor Analytics SailTrace", "0.1.1", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.SailTrace.EntryPoint), "Restitutor Analytics SailTrace", "0.1.2", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 
 namespace Restitutor.SailTrace;
@@ -15,10 +15,12 @@ namespace Restitutor.SailTrace;
 // Records only while SceneManager reports the ocean scene.
 // 0.1.1: hooks installed on the first frame after a scene is entered (not at load); ship-entity creation
 // timing (BoatEntityCreateManager.CreateShipEntity = 1 flagship per frame, OceanScene.AddNpcBoat);
+// 0.1.2: calendar timing (CalendarMgr.AddGameInsideMonth, PortScheduleManager.OnTheMonthRefresh/OnTheDayRefresh)
+// recorded in every scene; gap rows carry month/day work done inside the long frame.
 // gap rows carry per-frame ship creations, instantiate requests by category, IL2CPP GC count and used-heap delta.
 public sealed class EntryPoint : MelonMod
 {
-    private const string Version = "0.1.1";
+    private const string Version = "0.1.2";
     private const double GapThresholdMs = 40;     // 0.1.1: same as HookCensus [HITCH] (above one missed vsync frame)
     private const double SlowFrameMs = 25;
     private const double ChurnWindowMs = 5000;
@@ -52,6 +54,7 @@ public sealed class EntryPoint : MelonMod
         public int OtherReq;
         public int NpcBoats, AreaEvents, ShipCreate;
         public double ShipCreateMs, ShipCreateMaxMs, NpcBoatMs;
+        public int Month, Day; public double MonthMs, DayMs;
         public double MaxArrivalLatency, SumArrivalLatency, MaxCompleteMs;
         public readonly Dictionary<string, int> ReqByCategory = new();
         public void Clear()
@@ -60,6 +63,7 @@ public sealed class EntryPoint : MelonMod
             TileReq = TileArrive = TileUnloadLoaded = TileUnloadPending = TileChurn = TileDisposeLoaded = 0;
             OtherReq = NpcBoats = AreaEvents = ShipCreate = 0;
             ShipCreateMs = ShipCreateMaxMs = NpcBoatMs = 0;
+            Month = Day = 0; MonthMs = DayMs = 0;
             MaxArrivalLatency = SumArrivalLatency = MaxCompleteMs = 0;
             ReqByCategory.Clear();
         }
@@ -125,6 +129,10 @@ public sealed class EntryPoint : MelonMod
             TryPatch(ocean, "AddNpcBoat", 5, nameof(NpcBoatPrefix), nameof(NpcBoatPostfix));
             var creator = asm.GetType("Il2CppClient.WorldLogic.Scenes.Ocean.BoatCreating.BoatEntityCreateManager", true)!;
             TryPatch(creator, "CreateShipEntity", 2, nameof(ShipCreatePrefix), nameof(ShipCreatePostfix));
+            var calendar = FindType(asm, "CalendarMgr"); var schedule = FindType(asm, "PortScheduleManager");
+            if (calendar != null) TryPatch(calendar, "AddGameInsideMonth", 1, nameof(CalPrefix), nameof(MonthAddPostfix)); else failedHooks.Add("CalendarMgr: type not found");
+            if (schedule != null) { TryPatch(schedule, "OnTheMonthRefresh", 0, nameof(CalPrefix), nameof(MonthRefreshPostfix)); TryPatch(schedule, "OnTheDayRefresh", 0, nameof(CalPrefix), nameof(DayRefreshPostfix)); }
+            else failedHooks.Add("PortScheduleManager: type not found");
             var spawner = asm.GetType("Il2CppClient.WorldLogic.Map.MapSpawner", true)!;
             TryPatch(spawner, "OnTerrainQualityChange", 0, nameof(QualityChangePrefix), null);
 
@@ -286,6 +294,28 @@ public sealed class EntryPoint : MelonMod
         }
         catch (Exception ex) { DiagnosticError("NpcBoatPostfix", ex); }
     }
+    private static Type? FindType(Assembly asm, string name)
+    {
+        Type[] all; try { all = asm.GetTypes(); } catch (ReflectionTypeLoadException e) { all = e.Types.Where(t => t != null).Select(t => t!).ToArray(); }
+        var m = all.Where(t => t.Name == name).ToArray();
+        return m.Length == 1 ? m[0] : null;
+    }
+    private static void CalPrefix(out double __state) { __state = TraceWriter.Now; }
+    private static void MonthAddPostfix(double __state) => Calendar("month_add", __state);
+    private static void MonthRefreshPostfix(double __state) => Calendar("month_refresh", __state);
+    private static void DayRefreshPostfix(double __state) => Calendar("day_refresh", __state);
+    private static void Calendar(string kind, double start)
+    {
+        try
+        {
+            if (!enabled || Environment.CurrentManagedThreadId != mainThread) return;
+            double ms = TraceWriter.Now - start;
+            if (kind == "day_refresh") { frame.Day++; frame.DayMs += ms; } else if (kind == "month_add") { frame.Month++; frame.MonthMs += ms; }
+            string scene = "?"; try { var sm = SceneManager.Instance; scene = sm == null ? "null" : sm.IsInOceanScene ? "ocean" : sm.IsInHarborScene ? "harbor" : "other"; } catch { }
+            writer?.Add(new { k = kind, ms = Round(TraceWriter.Ms), f = frameIndex, costMs = Round(ms), scene });
+        }
+        catch (Exception ex) { DiagnosticError("Calendar", ex); }
+    }
     private static void ShipCreatePrefix(out double __state) { __state = TraceWriter.Now; }
     private static void ShipCreatePostfix(double __state)
     {
@@ -336,7 +366,7 @@ public sealed class EntryPoint : MelonMod
                 second.Clear(); frame.Clear();
                 return;
             }
-            if (!inOcean) { lastFrame = now; return; }
+            if (!inOcean) { lastFrame = now; frame.Clear(); return; }
 
             double gap = now - lastFrame;
             lastFrame = now;
@@ -365,6 +395,7 @@ public sealed class EntryPoint : MelonMod
                     k = "gap", ms = Round(now), f = frameIndex, gapMs = Round(gap),
                     // activity recorded between previous OnUpdate and this one (i.e. inside the long frame)
                     inFrame = new { req = frame.TileReq, arrive = frame.TileArrive, unload = frame.TileUnloadLoaded, otherReq = frame.OtherReq,
+                        month = frame.Month, monthMs = Round(frame.MonthMs), day = frame.Day, dayMs = Round(frame.DayMs),
                         shipCreate = frame.ShipCreate, shipCreateMs = Round(frame.ShipCreateMs), npcBoat = frame.NpcBoats, npcBoatMs = Round(frame.NpcBoatMs),
                         reqByCat = frame.ReqByCategory.Count > 0 ? new Dictionary<string, int>(frame.ReqByCategory) : null },
                     il2cppUsedDeltaMB = Round(usedDelta / 1048576.0),
