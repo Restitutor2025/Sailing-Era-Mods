@@ -41,7 +41,7 @@ namespace Il2CppClient.UILogic.UISailReady
         public PlayerData _playerData = new();
         public ESelectPortStatus Status;
         public int DaysUpdates;
-        public void CheckPortSelectStatus(int p, out ESelectPortStatus status, out int level) { status=Status;level=0; }
+        public void CheckPortSelectStatus(int p, out ESelectPortStatus status, out int level) { status = Status != ESelectPortStatus.None ? Status : (Model.TotalPortDic.TryGetValue(p, out var d) && !d.MeasureCanReach ? ESelectPortStatus.NeedMeasurer : (ESelectPortStatus)1); level=0; }
         public int GetPortNode(int port) => port * 10;
         public void SetTargetDays2() => DaysUpdates++;
     }

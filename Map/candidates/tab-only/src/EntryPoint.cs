@@ -4,7 +4,7 @@ using MelonLoader;
 using Restitutor.Core;
 using UnityEngine.InputSystem;
 
-[assembly: MelonInfo(typeof(Restitutor.Map.EntryPoint), "Restitutor fixes map", "0.2.5", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.Map.EntryPoint), "Restitutor fixes map", "0.2.6", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 
 namespace Restitutor.Map;
@@ -31,15 +31,15 @@ public sealed class EntryPoint : MelonMod
     {
         if (!CoreInfo.Require(Log, "0.2.0")) return;
         var cat = MelonPreferences.CreateCategory("RestitutorMap");
-        var mode = cat.CreateEntry("RedPortMode", "controller", description: "controller = ctrlSelfPort only; url = also swap icon url (0.2.1 look)");
-        RoutePortVisuals.UrlMode = string.Equals(mode.Value, "url", StringComparison.OrdinalIgnoreCase);
+        var mode = cat.CreateEntry("RedPortMode", "url", description: "url = red icon url (native look, default); controller = ctrlSelfPort only (not red in game)");
+        RoutePortVisuals.UrlMode = !string.Equals(mode.Value, "controller", StringComparison.OrdinalIgnoreCase);
         main = Set(typeof(EntryPoint));
         if (main.InstallAll(Log, "Installation", () =>
             {
                 FogLifetime.Install();
                 SharedMap.Install();
             }))
-            Log.Msg("Map 0.2.5 hooks installed (Restitutor.Core " + CoreInfo.Version + ", shared input gate; no UpdateInfo hook: route-session red ports/flags from the UIMapView.Refresh postfix, red port mode=" + (RoutePortVisuals.UrlMode ? "url" : "controller") + "; [MAPDIAG] counters). No save files are edited by this mod.");
+            Log.Msg("Map 0.2.6 hooks installed (Restitutor.Core " + CoreInfo.Version + ", shared input gate; no UpdateInfo hook: route-session red ports = native CheckPortSelectStatus 3/4 or no open line, re-applied from the UIMapView.Refresh postfix, red port mode=" + (RoutePortVisuals.UrlMode ? "url" : "controller") + "; [MAPDIAG] counters). No save files are edited by this mod.");
     }
     public override void OnUpdate() => SharedMap.Tick();
     private static HookSet Set(Type handler)

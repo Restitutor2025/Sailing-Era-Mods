@@ -387,24 +387,46 @@ internal static class SharedMap
             if (line.isSelect) line.Order = forward;
         }
         map.SetLane(lines); map.Model.MarkDirty(); planner.Model.MarkDirty();
+        ComputeRed();
         foreach (var icon in map.Model.HarbourIcons.Values) RefreshPort(icon, false);
     }
-    // Same reachability rule as 0.2.1; one dictionary lookup instead of three.
-    private static bool Reachable(int harbourId)
+    // 0.2.6: the same predicate the native click handler uses (UISailLineCtrl.CheckPortSelectStatus 0xD326F0):
+    // status 3 = survey level too low ("Tip_MeasureLvNoReached"), 4 = no route from the last waypoint; plus the
+    // native "no open route" check (NoLineReach false). Computed once per route change, not per frame.
+    private static readonly HashSet<int> red = new();
+    private static void ComputeRed()
     {
-        if (harbourId == planner!._playerData.PlayerPort.StayInPortId) return true;
-        return planner.Model.TotalPortDic.TryGetValue(harbourId, out var data) && data != null && data.MeasureCanReach && data.NoLineReach;
+        red.Clear();
+        var sw = System.Diagnostics.Stopwatch.StartNew(); int s3 = 0, s4 = 0, line = 0;
+        foreach (var entry in planner!.Model.TotalPortDic)
+        {
+            int id = entry.Key; var data = entry.Value;
+            if (data == null || id == planner._playerData.PlayerPort.StayInPortId) continue;
+            ESelectPortStatus st = default; int need = 0;
+            try { planner.CheckPortSelectStatus(id, out st, out need); } catch { continue; }
+            int s = (int)st;
+            if (s == 3) { red.Add(id); s3++; }
+            else if (s == 4) { red.Add(id); s4++; }
+            else if ((s == 1) && !data.NoLineReach) { red.Add(id); line++; }
+        }
+        if (redLogs++ < 20) EntryPoint.Log.Msg($"[ROUTE] red ports {red.Count} (survey {s3}, no path {s4}, no open line {line}) in {sw.Elapsed.TotalMilliseconds:0.0} ms; url mode={RoutePortVisuals.UrlMode}");
     }
+    private static int redLogs;
+    // Same reachability rule as 0.2.1; one dictionary lookup instead of three.
+    private static bool Reachable(int harbourId) => !red.Contains(harbourId);
     private static bool RouteIcon(UIMapHarbourIcon icon)
         => routeMode && session && map != null && icon.IsInit && icon.Model?.Pointer == map.Model.Pointer;
     // Runs inside UIMapView.Refresh after the native UpdateInViewIcons has redrawn the visible icons
     // (UpdateInfo rewrites url and ctrlSelfPort every call, so the red state is re-applied here).
     private static void RefreshVisible()
     {
-        var model = map!.Model; var icons = model.HarbourIcons; var inView = model.InViewIcons;
-        if (icons == null || inView == null) return;
-        foreach (int id in inView)
+        var icons = map!.Model.HarbourIcons;
+        if (icons == null || planner == null) return;
+        // Red ports and selected ports only (their visuals are the ones the native redraw can undo).
+        foreach (int id in red)
             if (icons.TryGetValue(id, out var icon) && icon != null) { MapDiag.PortInfo(); RefreshPort(icon, true); }
+        foreach (int id in planner!.SailLineManager.SelectPortList)
+            if (!red.Contains(id) && icons.TryGetValue(id, out var icon) && icon != null) RefreshPort(icon, true);
     }
     private static void RefreshPort(UIMapHarbourIcon __instance, bool nativeRefresh)
     {
@@ -435,6 +457,7 @@ internal static class SharedMap
         session = routeMode = available = false;
         map = null; planner = null; ready = null; mapInfo = null;
         flags.Clear(); lastFrame = -1; lastPort = 0; forwarding = false;
+        red.Clear();
         RoutePortVisuals.Restore();
     }
 }

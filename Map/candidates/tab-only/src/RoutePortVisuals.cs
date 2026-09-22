@@ -10,7 +10,7 @@ namespace Restitutor.Map;
 // Unreachable route ports are drawn red.
 // 0.2.5: the UpdateInfo hook is gone, so the 0.2.3 native branch (per-call _eMapUseType switch) is not used; a
 // session-wide _eMapUseType=1 changes port selection and the commerce UI (rejected). Icons are recoloured from the
-// UIMapView.Refresh postfix. Mode "controller" (default, under test) sets only ctrlSelfPort=2; mode "url" also swaps
+// UIMapView.Refresh postfix. Mode "url" (default since 0.2.6: controller alone was not red in game) swaps the icon url; "controller" sets only ctrlSelfPort=2
 // the icon url (0.2.1 look; the native UpdateInfo resets it every Refresh, during a route session only).
 // 0.2.3 native path: the original UIMapHarbourIcon.UpdateInfo already has a red-port branch
 // (0x5E4DE4..0x5E4F1B): UIMapCtrl._eMapUseType(+0x68)==1 and UIMapCtrl.RedPort(+0x78)
@@ -70,10 +70,13 @@ internal static class RoutePortVisuals
     {
         var ui = icon.Component?.TryCast<UIHarbourIcon>();
         if (ui == null || ui.isDisposed || ui.loaderIcon == null || ui.ctrlSelfPort == null) return;
-        if (nativeRefresh || !saved.ContainsKey(ui.Pointer))
-            saved[ui.Pointer] = (ui, ui.loaderIcon.url, ui.ctrlSelfPort.selectedIndex);
+        string redUrl = IconUtils.GetRedHarbourIcon(TemplateManager.GetPort(icon.HarbourId).mapIcon);
+        // Save the native drawing as baseline, never our own red state (the native redraw does not reach every icon every frame).
+        bool have = saved.TryGetValue(ui.Pointer, out var old);
+        bool ours = ui.loaderIcon.url == redUrl || (have && ui.ctrlSelfPort.selectedIndex == 2 && old.state != 2);
+        if (!have || (nativeRefresh && !ours)) saved[ui.Pointer] = (ui, ui.loaderIcon.url, ui.ctrlSelfPort.selectedIndex);
         var baseline = saved[ui.Pointer];
-        if (UrlMode) ui.loaderIcon.url = reachable ? baseline.url : IconUtils.GetRedHarbourIcon(TemplateManager.GetPort(icon.HarbourId).mapIcon);
+        if (UrlMode) ui.loaderIcon.url = reachable ? baseline.url : redUrl;
         ui.ctrlSelfPort.selectedIndex = reachable ? baseline.state : 2;
     }
 
