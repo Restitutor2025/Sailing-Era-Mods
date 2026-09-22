@@ -1,0 +1,8 @@
+{"name":"fix-contribution-0.5.7","branch":"fix/contribution-assets",
+ "desc":"Contribution 0.5.7 - restores the UI artwork missing from the 0.5.6 build (city benefit HUD), adds assets to the repo.",
+ "rollback":"Contribution\\releases\\0.5.6 is the broken build; use 0.5.7.",
+ "requires_merged":"refactor/cheats-core",
+ "core_ok":["36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+ "installs":[["Contribution\\releases\\0.5.7\\Restitutor_fixes_Contribution.dll","Mods\\Additional_Functions\\Restitutor_Additional_Contribution_Goods_Recognition.dll","3DD26315F1DBDCAA48F20BC9E69FBFDAE4D8609C56A718095196BD841BD94F43"]],
+ "commits":[[["Contribution","docs/mods/contribution",".gitignore"],"fix(contribution): ship embedded UI artwork again (0.5.7)","0.5.6 was built from a working copy without assets/*.png, so the EmbeddedResource items were missing (Missing UI artwork: city-panel). Code unchanged; assets are now tracked in the repo."],
+            [["tools","fix-contribution-0.5.7.ps1","fix-contribution-0.5.7.bat"],"chore: Contribution 0.5.7 install script",""]]}
