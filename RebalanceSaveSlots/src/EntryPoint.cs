@@ -4,8 +4,11 @@ using Restitutor.Core;
 using Il2CppClient.PlayerStore.StorageHistory;
 using Il2CppClient.UILogic.UISystem;
 using Il2CppLitJson;
+using Il2CppFairyGUI;
+using Il2CppUISystem;
+using Il2CppClient.Utils;
 
-[assembly: MelonInfo(typeof(Restitutor.RebalanceSaveSlots.EntryPoint), "Restitutor Rebalance SaveSlots", "0.1.0", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.RebalanceSaveSlots.EntryPoint), "Restitutor Rebalance SaveSlots", "0.1.1", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.RebalanceSaveSlots;
 
@@ -15,10 +18,16 @@ namespace Restitutor.RebalanceSaveSlots;
 //  - SaveStorageHistories (0x9CFA30) writes JsonMapper.ToJson(_storageHistories) = the whole list.
 //  - UIStorageView.Refresh (0x6638B0) sets listStorage.numItems = 10 (immediate); RenderStorageItem indexes the manager list.
 //  - Save/Load/Delete/Move go through TryGetStorageByArchiveIndex (list[index]) and PlayerData file <index>; no range check found.
-// Three postfixes; originals always run. The history file format is unchanged: without this mod the game reads the first 10.
+// 0.1.1 (game test 2026-09-22: rows 11+ blank): RenderStorageItem (0x663C50) plays aniReset (hide) then
+//  aniruchang with delay index*0.1 s while the view is opening; ShowHook then sets _isShowing and MarkDirty
+//  -> Refresh sets numItems 10 (rows 10+ leave the stage; Transition.OnOwnerRemovedFromStage stops them in
+//  the hidden state) and this mod sets 101 again (rows come back without animation = stay hidden).
+//  Fix: RenderStorageItem postfix shows rows 10+ at their end state. Refresh postfix also re-applies the
+//  selection (set_selectedIndex clears it for index >= child count) and the count text (original: N/10).
+// Four postfixes; originals always run. The history file format is unchanged: without this mod the game reads the first 10.
 public sealed class EntryPoint : MelonMod
 {
-    internal const string Version = "0.1.0";
+    internal const string Version = "0.1.1";
     private static MelonLogger.Instance log = null!;
     private static bool enabled, scrollLogged;
     private static string? lastError;
@@ -42,9 +51,10 @@ public sealed class EntryPoint : MelonMod
             hookSet.Hook(typeof(StorageHistoryManager), "InitializeStorageHistories", postfix: nameof(AfterInitialize));
             hookSet.Hook(typeof(StorageHistoryManager), "_LoadHistoryData_b__19_1", postfix: nameof(AfterLoad));
             hookSet.Hook(typeof(UIStorageView), "Refresh", postfix: nameof(AfterRefresh));
+            hookSet.Hook(typeof(UIStorageView), "RenderStorageItem", postfix: nameof(AfterRenderItem));
             enabled = true;
         })) { enabled = false; return; }
-        log.Msg($"Rebalance SaveSlots {Version} loaded (Restitutor.Core {CoreInfo.Version}); 3 hooks. Slots {Rules.OriginalCount} -> {Rules.Total} ({Rules.AutoCount} auto + {Rules.ManualCount} manual).");
+        log.Msg($"Rebalance SaveSlots {Version} loaded (Restitutor.Core {CoreInfo.Version}); 4 hooks. Slots {Rules.OriginalCount} -> {Rules.Total} ({Rules.AutoCount} auto + {Rules.ManualCount} manual).");
     }
 
     private static void AfterInitialize(StorageHistoryManager __instance)
@@ -109,6 +119,16 @@ public sealed class EntryPoint : MelonMod
             var list = StorageHistoryManager.Instance?._storageHistories;
             if (gl == null || list == null) return;
             if (gl.numItems != list.Count) gl.numItems = list.Count;
+            var model = __instance._model;
+            if (model != null)
+            {
+                int sel = Rules.ReselectAfterGrow(model.SelectedStorageIndex, gl.numItems);
+                if (sel >= 0 && gl.selectedIndex != sel) gl.selectedIndex = sel;
+                var txt = panel!.txtStorageNum;
+                var fmt = TextLibUtils.Text("UIStatic_System_Storage_StorageNum", "");
+                if (txt != null && !string.IsNullOrEmpty(fmt))
+                    txt.text = string.Format(fmt, model.CurrentStorageCount, list.Count);
+            }
             if (!scrollLogged)
             {
                 scrollLogged = true;
@@ -116,6 +136,21 @@ public sealed class EntryPoint : MelonMod
             }
         }
         catch (Exception ex) { Fail("UIStorageView.Refresh postfix", ex); }
+    }
+
+    // Rows 10+: finish the hide transition, then run the enter transition to its end at once.
+    private static void AfterRenderItem(int index, GObject itemGObject)
+    {
+        if (!enabled || !Rules.ShowInstantly(index) || itemGObject == null) return;
+        try
+        {
+            var item = itemGObject.TryCast<UIBtnStorageItem>();
+            if (item == null) return;
+            item.aniReset?.Stop(true, false);
+            var enter = item.aniruchang;
+            if (enter != null) { enter.Play(); enter.Stop(true, false); }
+        }
+        catch (Exception ex) { Fail("RenderStorageItem postfix", ex); }
     }
 
     private static void Fail(string what, Exception ex)

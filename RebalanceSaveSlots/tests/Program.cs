@@ -17,6 +17,8 @@ Check(Rules.ToRestore(150, 10).Last() == 100, "cap at 100");
 // Loader copied fewer than 10 (short file) -> restore nothing beyond the file.
 Check(!Rules.ToRestore(5, 5).Any(), "short file");
 Check(Rules.IsAuto(0) && Rules.IsAuto(1) && !Rules.IsAuto(2) && !Rules.IsAuto(100), "auto = 0,1");
+Check(!Rules.ShowInstantly(0) && !Rules.ShowInstantly(9) && Rules.ShowInstantly(10) && Rules.ShowInstantly(100) && !Rules.ShowInstantly(101), "instant rows 10..100");
+Check(Rules.ReselectAfterGrow(15, 101) == 15 && Rules.ReselectAfterGrow(3, 101) == -1 && Rules.ReselectAfterGrow(101, 101) == -1 && Rules.ReselectAfterGrow(-1, 101) == -1, "reselect only 10..count-1");
 
 Console.WriteLine($"PASS {pass} FAIL {fail}");
 return fail == 0 ? 0 : 1;
