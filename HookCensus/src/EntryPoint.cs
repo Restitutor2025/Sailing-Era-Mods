@@ -1,16 +1,22 @@
 using System.Diagnostics;
 using System.Reflection;
 using HarmonyLib;
+using Il2CppClient.WorldLogic.Entity.Component.Boat;
+using Il2CppInterop.Runtime;
 using MelonLoader;
 using SceneManager = Il2CppCore.SceneSystem.SceneManager;
 
-[assembly: MelonInfo(typeof(Restitutor.HookCensus.EntryPoint), "Restitutor Analytics HookCensus", "0.1.0", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.HookCensus.EntryPoint), "Restitutor Analytics HookCensus", "0.1.1", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.HookCensus;
 
 // Diagnostic only: counts calls of native methods that other Restitutor mods hook, so the
 // resource audit (handoff/RESOURCE_AUDIT_2026-09-22.md, section B) is decided on data.
 // Each counter prefix only increments a long. Remove this DLL after one play session.
+// 0.1.1: (1) distinct BoatEntityOceanDriver instances per window + Time.fixedDeltaTime/timeScale,
+// to tell "more boats" from "more physics steps"; (2) per-frame gap check in the existing OnUpdate:
+// frames >= 40 ms outside loading get one [HITCH] line with managed GC counts and IL2CPP heap
+// deltas across that frame, to tell GC pauses from other stalls. Read-only; no game state touched.
 public sealed class EntryPoint : MelonMod
 {
     private sealed record Target(string Type, string Method, int Params, string? FirstParam);
@@ -42,6 +48,17 @@ public sealed class EntryPoint : MelonMod
     private static string lastScene = "";
     private static readonly Dictionary<string, (double seconds, long[] totals)> perScene = new();
 
+    // 0.1.1 state
+    private const double HitchMs = 40;
+    private const int MaxHitchLines = 1500;
+    private static readonly HashSet<IntPtr> boats = new();
+    private static long lastFrame;
+    private static int g0, g1, g2;
+    private static long ilUsed, ilHeap;
+    private static int hitchLines, winHitches;
+    private static double winMaxMs;
+    private static int wg0, wg1, wg2;
+
     // Patched on the first frame after a scene is entered, not in OnInitializeMelon: resolving a
     // UIManager method at load runs its .cctor and creates FairyGUI.Stage too early (black screen).
     private bool installed;
@@ -67,7 +84,7 @@ public sealed class EntryPoint : MelonMod
             }
             catch (Exception ex) { LoggerInstance.Warning($"skip {t.Type}.{t.Method}: {ex.Message}"); }
         }
-        LoggerInstance.Msg($"HookCensus 0.1.0: counting {active.Count(a => a)}/{targets.Length} methods. One [CENSUS] line per 5 s (calls per second); per-scene averages on exit. Diagnostic only.");
+        LoggerInstance.Msg($"HookCensus 0.1.1: counting {active.Count(a => a)}/{targets.Length} methods. One [CENSUS] line per 5 s (calls per second); per-scene averages on exit. [HITCH] per frame >= 40 ms (not loading); boats/fdt/ts/GC/heap on each [CENSUS] line. Diagnostic only.");
     }
 
     private static string Scene()
@@ -91,7 +108,8 @@ public sealed class EntryPoint : MelonMod
             Install();
         }
         long now = Stopwatch.GetTimestamp();
-        if (windowStart == 0) { windowStart = now; lastScene = Scene(); return; }
+        FrameCheck(now);
+        if (windowStart == 0) { windowStart = now; lastScene = Scene(); wg0 = g0; wg1 = g1; wg2 = g2; return; }
         double sec = (now - windowStart) / (double)Stopwatch.Frequency;
         if (sec < 5) return;
         var parts = new List<string>();
@@ -103,9 +121,40 @@ public sealed class EntryPoint : MelonMod
             if (c > 0) parts.Add($"{targets[i].Type}.{targets[i].Method}={c / sec:0}");
         }
         perScene[lastScene] = acc;
-        if (parts.Count > 0 && lines++ < 3000) LoggerInstance.Msg($"[CENSUS] {sec:0.0}s scene={lastScene}: " + string.Join(" ", parts));
+        string extra = $" | boats={boats.Count} fdt={Safe(() => UnityEngine.Time.fixedDeltaTime):0.0000} ts={Safe(() => UnityEngine.Time.timeScale):0.00}" +
+            $" maxFrame={winMaxMs:0}ms hitches={winHitches} mgdGC={g0 - wg0}/{g1 - wg1}/{g2 - wg2} il2cppUsed={ilUsed / 1048576.0:0.0}MB heap={ilHeap / 1048576.0:0.0}MB";
+        if (parts.Count > 0 && lines++ < 3000) LoggerInstance.Msg($"[CENSUS] {sec:0.0}s scene={lastScene}: " + string.Join(" ", parts) + extra);
         windowStart = now; lastScene = Scene();
+        boats.Clear(); winMaxMs = 0; winHitches = 0; wg0 = g0; wg1 = g1; wg2 = g2;
     }
+
+    private static float Safe(Func<float> f) { try { return f(); } catch { return float.NaN; } }
+
+    // Runs once per frame from OnUpdate. Only integer reads; a line is written only for a slow frame.
+    private void FrameCheck(long now)
+    {
+        int n0 = GC.CollectionCount(0), n1 = GC.CollectionCount(1), n2 = GC.CollectionCount(2);
+        long used = 0, heap = 0;
+        try { used = IL2CPP.il2cpp_gc_get_used_size(); heap = IL2CPP.il2cpp_gc_get_heap_size(); } catch { }
+        if (lastFrame != 0)
+        {
+            double ms = (now - lastFrame) * 1000.0 / Stopwatch.Frequency;
+            if (ms > winMaxMs) winMaxMs = ms;
+            if (ms >= HitchMs)
+            {
+                string scene = Scene();
+                if (scene != "loading")
+                {
+                    winHitches++;
+                    if (hitchLines++ < MaxHitchLines)
+                        LoggerInstance.Msg($"[HITCH] {ms:0}ms scene={scene} frame={FrameNo()} mgdGC+={n0 - g0}/{n1 - g1}/{n2 - g2} " +
+                            $"il2cppUsed {ilUsed / 1048576.0:0.0}->{used / 1048576.0:0.0}MB heap {ilHeap / 1048576.0:0.0}->{heap / 1048576.0:0.0}MB boatsSoFar={boats.Count}");
+                }
+            }
+        }
+        lastFrame = now; g0 = n0; g1 = n1; g2 = n2; ilUsed = used; ilHeap = heap;
+    }
+    private static int FrameNo() { try { return UnityEngine.Time.frameCount; } catch { return -1; } }
 
     public override void OnDeinitializeMelon()
     {
@@ -120,7 +169,7 @@ public sealed class EntryPoint : MelonMod
     private static void C00() => counts[0]++;
     private static void C01() => counts[1]++;
     private static void C02() => counts[2]++;
-    private static void C03() => counts[3]++;
+    private static void C03(BoatEntityOceanDriver __instance) { counts[3]++; try { boats.Add(__instance.Pointer); } catch { } }
     private static void C04() => counts[4]++;
     private static void C05() => counts[5]++;
     private static void C06() => counts[6]++;
