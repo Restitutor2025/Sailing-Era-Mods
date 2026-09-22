@@ -1,0 +1,4 @@
+PASS 1533 rebalance growth checks: values, level rows, 10-level points, next-point label, tip, luck, hp/attack gain, weight, growth %, slider plan, preview.
+PASS 4 cheats skill checks: choices, default, normalize, 10-level points.
+PASS 10 devil fruit checks (0.1.5): ids, texts, save record steps, grade clamp, letters.
+PASS 14 stat rank checks: (rate+1)% rolls, perfect-then-success order, letters, growth rows.

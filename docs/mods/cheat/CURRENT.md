@@ -1,3 +1,15 @@
+# Cheats Skill 1.1.1 — Rebalance Growth 가 실제 동작할 때만 추가 지급 양보
+
+게임 확인 전. Rebalance Growth 0.3.0 과 함께 배포. [상세](skill-1.1.1.md)
+
+# Cheats Interface 1.6.1 — 치트 창은 게임 중(도시·바다·육지)에만, 타이틀·로딩 중 없음
+
+게임 확인 전. [상세](1.6.1.md)
+
+# Cheats Skill 1.1.0 — 간격 선택지 1/2/5레벨, 기본 5 · Rebalance Growth 공존
+
+게임 확인 전. Rebalance Growth 0.1.0 과 함께 배포. [상세](skill-1.1.0.md)
+
 # Cheats Interface 1.6.0 + Skill 1.0.5 — Restitutor.Core 전환(공용 입력 게이트), 기능 변경 없음
 
 게임 확인 전. 필요 Core 0.2.0. [상세](1.6.0.md)

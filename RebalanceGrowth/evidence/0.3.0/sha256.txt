@@ -1,0 +1,4 @@
+4eaad0b80199c217b264ddc705e3f3667acbf3edb43f40a67abff3725e8644bc  RebalanceGrowth/releases/0.3.0/Restitutor_Rebalance_Growth.dll
+047c0fd8bd33a31b6e6bf7677d9d2f990a1e01e60ddd921400e4dcd7505142b7  Cheats/releases/skill-1.1.1/Restitutor_Cheats_Skill.dll
+a038b66db7fadf740ce99175a9106e9257bccd331ec472c8f2c4e372753f42f5  StatRank/releases/0.2.0/Restitutor_Additional_Stat_Rank.dll
+ba1323ca0c5092d1f960dad748788403e22040fe3ff8bf60a43941fbdd76d0fa  DevilFruits/releases/0.1.5/Restitutor_devil_fruits.dll

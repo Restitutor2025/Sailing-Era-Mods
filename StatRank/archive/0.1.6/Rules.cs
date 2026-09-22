@@ -22,14 +22,4 @@ internal static class Rules {
         var o=Odds(successRate,perfectRate);
         return new[]{letter,Percent(o.plus2),Percent(o.plus1),Percent(o.plus0),Mean(o.mean)};
     }
-    // 0.2.0: with Restitutor Rebalance Growth 0.3.0+ active the roll is replaced by cumulative growth:
-    // per level S 100 / A 77.5 / B 55 / C 32.5 / D 10 % (same table as RebalanceGrowth Rules.RatePerMille),
-    // progress kept in PlayerRoleData.<Stat>_Exp as per-mille, dropped at the ability cap.
-    internal static int RatePerMille(string letter)=>letter switch { "S"=>1000, "A"=>775, "B"=>550, "C"=>325, "D"=>100, _=>-1 };
-    internal static string PerMille(int v)=>(v/10.0).ToString("0.#",CultureInfo.InvariantCulture)+"%";
-    internal static readonly string[] GrowthHeader={"등급","레벨당","누적"};
-    internal static string[] GrowthRow(string letter,int progress,bool atCap) {
-        int rate=RatePerMille(letter);
-        return new[]{letter,rate<0?"?":PerMille(rate),atCap?"최대":PerMille(Math.Clamp(progress,0,999))};
-    }
 }

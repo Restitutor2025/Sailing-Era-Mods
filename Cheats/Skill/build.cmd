@@ -11,7 +11,7 @@ dotnet build "%~dp0Restitutor_Cheats_Skill.csproj" -c Release -p:NuGetAudit=fals
 set "RC=%ERRORLEVEL%"
 echo exit=%RC% >> "%LOG%"
 if not "%RC%"=="0" goto done
-set "OUT=%ROOT%\Cheats\releases\skill-1.0.2"
+set "OUT=%ROOT%\Cheats\releases\skill-1.1.1"
 if not exist "%OUT%" mkdir "%OUT%"
 copy /Y "%~dp0bin\Release\net6.0\Restitutor_Cheats_Skill.dll" "%OUT%\" >> "%LOG%"
 powershell -NoProfile -Command "Get-FileHash '%OUT%\Restitutor_Cheats_Skill.dll' -Algorithm SHA256 | Format-List" >> "%LOG%"

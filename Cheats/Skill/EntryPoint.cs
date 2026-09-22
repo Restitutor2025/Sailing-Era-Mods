@@ -7,7 +7,7 @@ using Il2CppClient.PlayerStore;
 using Il2CppFairyGUI;
 using Restitutor.Cheats.Interface;
 using SceneManager=Il2CppCore.SceneSystem.SceneManager;
-[assembly: MelonInfo(typeof(Restitutor.Cheats.Skill.EntryPoint),"Restitutor Cheats Skill","1.0.5","Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.Cheats.Skill.EntryPoint),"Restitutor Cheats Skill","1.1.1","Restitutor")]
 [assembly: MelonGame("bolingo","SailingEra")]
 [assembly: MelonAdditionalDependencies("Restitutor_Cheats_Interface")]
 namespace Restitutor.Cheats.Skill;
@@ -33,7 +33,7 @@ public sealed class EntryPoint:MelonMod {
             Hook(typeof(UIHeroLevelUpCtrl),"ChangeRewardSkillState",nameof(RewardBefore),nameof(GrantExtra));
             Host.Register(panel);loaded=true;
         })) return;
-        log.Msg($"Cheats Skill 1.0.5 loaded (Restitutor.Core {CoreInfo.Version}); 4 patched methods; interval setting: {state}.");
+        log.Msg($"Cheats Skill 1.1.1 loaded (Restitutor.Core {CoreInfo.Version}); 4 patched methods; interval setting: {state}.");
     }
     private static void Interval(ref int __result) {
         // 1.0.3: Interface O-off returns the game's own value; the saved setting is kept for O-on.
@@ -52,9 +52,26 @@ public sealed class EntryPoint:MelonMod {
     private sealed record Multi(IntPtr Ctrl,int Role,int From,int Count,int Interval,int Points);
     private static Multi? before,pending;
     private static void ClearPending() { before=null;pending=null; }
+    // 1.1.0: Restitutor Rebalance Growth grants the 10-level extra points itself, using the effective
+    // LevelGetSkill (this mod's override included). While it is loaded this mod only changes the interval,
+    // otherwise both would add the extra points.
+    // 1.1.1: "loaded" is not enough - Rebalance Growth disables its rules when the GameAssembly check fails,
+    // and then nobody would grant the extra points. Read its public static ExtraGrantActive instead.
+    private static System.Reflection.PropertyInfo? growthFlag;
+    private static bool growthLooked;
+    private static bool GrowthLoaded {
+        get {
+            if(!growthLooked) {
+                growthLooked=true;
+                var m=MelonBase.RegisteredMelons.FirstOrDefault(x=>x.Info.Name=="Restitutor Rebalance Growth");
+                growthFlag=m?.MelonAssembly?.Assembly?.GetType("Restitutor.RebalanceGrowth.EntryPoint")?.GetProperty("ExtraGrantActive");
+            }
+            try { return growthFlag?.GetValue(null) is true; } catch { return false; }
+        }
+    }
     private static void BeforeMulti(UIHeroLevelUpCtrl __instance) {
         before=pending=null;
-        if(!loaded || !Host.CheatsOn) return;
+        if(!loaded || !Host.CheatsOn || GrowthLoaded) return;
         try {
             var model=__instance.Model;var role=model?.CurRole;
             if(model==null || role==null || model.BanTouch) return;
