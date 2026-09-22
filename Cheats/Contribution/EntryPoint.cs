@@ -13,7 +13,7 @@ using Il2CppFairyGUI;
 
 using SceneManager = Il2CppCore.SceneSystem.SceneManager;
 using Restitutor.Cheats.Interface;
-[assembly: MelonInfo(typeof(Restitutor.Cheats.Contribution.EntryPoint), "Restitutor Cheats Contribution","1.1.2", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.Cheats.Contribution.EntryPoint), "Restitutor Cheats Contribution","1.1.3", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 [assembly: MelonAdditionalDependencies("Restitutor_Cheats_Interface")]
 namespace Restitutor.Cheats.Contribution;
@@ -25,13 +25,29 @@ public sealed class EntryPoint : MelonMod {
     internal static string Unavailable = "도시에서만 사용 가능";
     private static PointProperty? neutral;
     internal static readonly ContributionPanel Panel = new();
+    // 1.1.3: the two modifier hooks exist only while Apply runs UpdateInfluence. Before this, they were
+    // installed at load and every native GetPointProperty/GetProperty call in the whole game paid a managed
+    // transition (the monthly market refresh makes ~65,000 such calls in one frame: 19 ms native, ~170 ms hooked).
+    private static HarmonyLib.Harmony? harmony;
+    private static bool keepHooks; // set if an unpatch ever fails: stay patched rather than risk a half-state
     public override void OnInitializeMelon() {
-        Log=LoggerInstance;
+        Log=LoggerInstance; harmony=HarmonyInstance;
+        loaded=true; Host.Register(Panel);
+        Log.Msg("Cheats Contribution 1.1.3 loaded (panel writes only on change; GetPointProperty/GetProperty hooked only during Apply).");
+    }
+    private static bool hooked;
+    private static void InstallHooks() {
+        if (hooked) return;
         try {
-            Host.Hook(HarmonyInstance,typeof(EntryPoint),typeof(BaseObjectData),"GetPointProperty",nameof(Point));
-            Host.Hook(HarmonyInstance,typeof(EntryPoint),typeof(BaseObjectData),"GetProperty",nameof(Rate));
-            loaded=true; Host.Register(Panel); Log.Msg("Cheats Contribution 1.1.2 loaded (panel writes only on change).");
-        } catch(Exception ex) { loaded=false; HarmonyInstance.UnpatchSelf(); Log.Error(ex.ToString()); }
+            Host.Hook(harmony!,typeof(EntryPoint),typeof(BaseObjectData),"GetPointProperty",nameof(Point));
+            Host.Hook(harmony!,typeof(EntryPoint),typeof(BaseObjectData),"GetProperty",nameof(Rate));
+            hooked=true;
+        } catch { try { harmony!.UnpatchSelf(); } catch (Exception un) { keepHooks=true; Log.Error("Unpatch after failed install: " + un); } throw; }
+    }
+    private static void RemoveHooks() {
+        if (!hooked || keepHooks) return;
+        try { harmony!.UnpatchSelf(); hooked=false; }
+        catch (Exception ex) { keepHooks=true; Log.Error("Modifier hooks could not be removed; they stay installed for this session: " + ex); }
     }
     internal static void ResetState() { ModifierScope.Current?.Dispose(); neutral=null; }
     // One-shot, matching commander only. Consumed before native update emits events.
@@ -88,16 +104,21 @@ public sealed class EntryPoint : MelonMod {
             if (before < 0 || before > 1000) throw new InvalidOperationException("Unexpected contribution range");
             neutral ??= new PointProperty(21, 0);
             if (neutral.PropertyValue != 0) throw new InvalidOperationException("Neutral property validation failed");
-            using (var scope = new ModifierScope(Player.PlayerCommander.CommanderData.Pointer)) {
-                Player.WorldPort.UpdateInfluence(id.Value, target - before);
-                if (!scope.Complete) throw new InvalidOperationException("Native modifier interception was not observed");
-            }
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            InstallHooks();
+            try {
+                using (var scope = new ModifierScope(Player.PlayerCommander.CommanderData.Pointer)) {
+                    Player.WorldPort.UpdateInfluence(id.Value, target - before);
+                    if (!scope.Complete) throw new InvalidOperationException("Native modifier interception was not observed");
+                }
+            } finally { RemoveHooks(); }
+            Log.Msg($"Apply hooks: installed+removed in {sw.Elapsed.TotalMilliseconds:0} ms (still installed={hooked})");
             int after = port.Influence;
             Log.Msg($"Cheat city={id} before={before} target={target} actual={after}");
             if (after != target) throw new InvalidOperationException($"Target mismatch: target={target}, actual={after}; no retry");
             Panel.Message($"적용 완료: {before} → {after}");
         } catch (Exception ex) { Log.Error(ex.ToString()); Panel.Message("적용 오류. 로그와 실제 수치를 확인하세요."); }
     }
-    public override void OnDeinitializeMelon() { loaded=false; HarmonyInstance.UnpatchSelf(); Host.Unregister(Panel); ResetState(); }
+    public override void OnDeinitializeMelon() { loaded=false; if (hooked) { try { HarmonyInstance.UnpatchSelf(); } catch { } } Host.Unregister(Panel); ResetState(); }
 }
 

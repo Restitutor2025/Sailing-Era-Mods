@@ -5,7 +5,7 @@ using MelonLoader.Utils;
 using Il2CppClient.WorldLogic.Scenes;
 using SceneManager = Il2CppCore.SceneSystem.SceneManager;
 
-[assembly: MelonInfo(typeof(Restitutor.SailTrace.EntryPoint), "Restitutor Analytics SailTrace", "0.1.2", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.SailTrace.EntryPoint), "Restitutor Analytics SailTrace", "0.1.3", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 
 namespace Restitutor.SailTrace;
@@ -15,12 +15,15 @@ namespace Restitutor.SailTrace;
 // Records only while SceneManager reports the ocean scene.
 // 0.1.1: hooks installed on the first frame after a scene is entered (not at load); ship-entity creation
 // timing (BoatEntityCreateManager.CreateShipEntity = 1 flagship per frame, OceanScene.AddNpcBoat);
+// 0.1.3: timed save/weather hooks (PlayerDataManager.SavePlayerData/AutoSavePlayerData, PlatformManager.SaveData,
+// NpcAgentManager.SaveAllBehaviorsData, WeatherMgr.PlayWeather, WeatherController.ChangeWeather, CloudController.OnTileCloudChange)
+// in every scene; gap rows list which of them ran inside the long frame (timed).
 // 0.1.2: calendar timing (CalendarMgr.AddGameInsideMonth, PortScheduleManager.OnTheMonthRefresh/OnTheDayRefresh)
 // recorded in every scene; gap rows carry month/day work done inside the long frame.
 // gap rows carry per-frame ship creations, instantiate requests by category, IL2CPP GC count and used-heap delta.
 public sealed class EntryPoint : MelonMod
 {
-    private const string Version = "0.1.2";
+    private const string Version = "0.1.3";
     private const double GapThresholdMs = 40;     // 0.1.1: same as HookCensus [HITCH] (above one missed vsync frame)
     private const double SlowFrameMs = 25;
     private const double ChurnWindowMs = 5000;
@@ -55,6 +58,7 @@ public sealed class EntryPoint : MelonMod
         public int NpcBoats, AreaEvents, ShipCreate;
         public double ShipCreateMs, ShipCreateMaxMs, NpcBoatMs;
         public int Month, Day; public double MonthMs, DayMs;
+        public readonly List<string> Timed = new();
         public double MaxArrivalLatency, SumArrivalLatency, MaxCompleteMs;
         public readonly Dictionary<string, int> ReqByCategory = new();
         public void Clear()
@@ -63,7 +67,7 @@ public sealed class EntryPoint : MelonMod
             TileReq = TileArrive = TileUnloadLoaded = TileUnloadPending = TileChurn = TileDisposeLoaded = 0;
             OtherReq = NpcBoats = AreaEvents = ShipCreate = 0;
             ShipCreateMs = ShipCreateMaxMs = NpcBoatMs = 0;
-            Month = Day = 0; MonthMs = DayMs = 0;
+            Month = Day = 0; MonthMs = DayMs = 0; Timed.Clear();
             MaxArrivalLatency = SumArrivalLatency = MaxCompleteMs = 0;
             ReqByCategory.Clear();
         }
@@ -133,6 +137,15 @@ public sealed class EntryPoint : MelonMod
             if (calendar != null) TryPatch(calendar, "AddGameInsideMonth", 1, nameof(CalPrefix), nameof(MonthAddPostfix)); else failedHooks.Add("CalendarMgr: type not found");
             if (schedule != null) { TryPatch(schedule, "OnTheMonthRefresh", 0, nameof(CalPrefix), nameof(MonthRefreshPostfix)); TryPatch(schedule, "OnTheDayRefresh", 0, nameof(CalPrefix), nameof(DayRefreshPostfix)); }
             else failedHooks.Add("PortScheduleManager: type not found");
+            foreach (var (tn, mn, pc) in new[] {
+                ("PlayerDataManager", "SavePlayerData", 4), ("PlayerDataManager", "AutoSavePlayerData", 1),
+                ("PlatformManager", "SaveData", 3), ("NpcAgentManager", "SaveAllBehaviorsData", 0),
+                ("WeatherMgr", "PlayWeather", 1), ("WeatherController", "ChangeWeather", 1), ("CloudController", "OnTileCloudChange", 0) })
+            {
+                var tt = FindType(asm, tn);
+                if (tt == null) { failedHooks.Add(tn + ": type not found or not unique"); continue; }
+                TryPatch(tt, mn, pc, nameof(CalPrefix), nameof(TimedPostfix));
+            }
             var spawner = asm.GetType("Il2CppClient.WorldLogic.Map.MapSpawner", true)!;
             TryPatch(spawner, "OnTerrainQualityChange", 0, nameof(QualityChangePrefix), null);
 
@@ -316,6 +329,19 @@ public sealed class EntryPoint : MelonMod
         }
         catch (Exception ex) { DiagnosticError("Calendar", ex); }
     }
+    private static void TimedPostfix(double __state, MethodBase __originalMethod)
+    {
+        try
+        {
+            if (!enabled || Environment.CurrentManagedThreadId != mainThread) return;
+            double ms = TraceWriter.Now - __state;
+            string name = (__originalMethod.DeclaringType?.Name ?? "?") + "." + __originalMethod.Name;
+            frame.Timed.Add(name + ":" + Math.Round(ms, 1));
+            string scene = "?"; try { var sm = SceneManager.Instance; scene = sm == null ? "null" : sm.IsInOceanScene ? "ocean" : sm.IsInHarborScene ? "harbor" : "other"; } catch { }
+            writer?.Add(new { k = "timed", ms = Round(TraceWriter.Ms), f = frameIndex, name, costMs = Round(ms), scene });
+        }
+        catch (Exception ex) { DiagnosticError("TimedPostfix", ex); }
+    }
     private static void ShipCreatePrefix(out double __state) { __state = TraceWriter.Now; }
     private static void ShipCreatePostfix(double __state)
     {
@@ -395,6 +421,7 @@ public sealed class EntryPoint : MelonMod
                     k = "gap", ms = Round(now), f = frameIndex, gapMs = Round(gap),
                     // activity recorded between previous OnUpdate and this one (i.e. inside the long frame)
                     inFrame = new { req = frame.TileReq, arrive = frame.TileArrive, unload = frame.TileUnloadLoaded, otherReq = frame.OtherReq,
+                        timed = frame.Timed.Count > 0 ? frame.Timed.ToArray() : null,
                         month = frame.Month, monthMs = Round(frame.MonthMs), day = frame.Day, dayMs = Round(frame.DayMs),
                         shipCreate = frame.ShipCreate, shipCreateMs = Round(frame.ShipCreateMs), npcBoat = frame.NpcBoats, npcBoatMs = Round(frame.NpcBoatMs),
                         reqByCat = frame.ReqByCategory.Count > 0 ? new Dictionary<string, int>(frame.ReqByCategory) : null },
