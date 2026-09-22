@@ -6,7 +6,7 @@ using MelonLoader;
 using Restitutor.Core;
 using UnityEngine.Rendering;
 
-[assembly: MelonInfo(typeof(Restitutor.IntroSkipMod), "Restitutor fixes", "0.1.3", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.IntroSkipMod), "Restitutor fixes", "0.1.4", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 
 namespace Restitutor;
@@ -47,7 +47,8 @@ public sealed class IntroSkipMod : MelonMod
                 hooks.Hook(typeof(UILaunchView), "OnInit", postfix: nameof(RegisterLaunch), declaredOnly: false);
                 hooks.Hook(typeof(UILaunchView), "HideHook", postfix: nameof(ReleaseLaunch), declaredOnly: false);
                 hooks.Hook(typeof(UILaunchView), "UpdateHook", prefix: nameof(BeforeLaunchUpdate), declaredOnly: false);
-                hooks.Hook(typeof(Transition), "_Play", postfix: nameof(AfterTransition), declaredOnly: false);
+                // 0.1.4: no hook on FairyGUI Transition._Play (every UI animation in the game passed through it).
+                // The two notice transitions are checked with Transition.playing only while the launch view exists.
             }))
             LoggerInstance.Msg("Intro hooks ready (Restitutor.Core " + CoreInfo.Version + "): startup logos, health bulletin, disclaimer only.");
         else
@@ -78,19 +79,32 @@ public sealed class IntroSkipMod : MelonMod
         }
     }
 
-    // Match native identities, not a global transition name: other UI animations are unaffected.
-    private static void AfterTransition(Transition __instance)
+    // Called every Update/LateUpdate while the launch view exists (a few seconds at startup): if one of the two
+    // registered notice transitions has started, finish it before it is rendered. Other animations are not touched.
+    private static void CheckNotices()
     {
-        if (disabled || launch == null) return;
+        var view = launch;
+        if (disabled || view == null) return;
+        Transition? t = null;
+        try
+        {
+            var h = view.AniTexHealthBulletin; var d = view.AniTexDisclaimer;
+            if (h != null && h.Pointer == health && h.playing) t = h;
+            else if (d != null && d.Pointer == disclaimer && d.playing) t = d;
+        }
+        catch (Exception ex) { disabled = true; instance!.LoggerInstance.Error($"Notice check failed; using original animation: {ex}"); return; }
+        if (t != null) SkipNotice(t);
+    }
+    private static void SkipNotice(Transition __instance)
+    {
         var ptr = __instance.Pointer;
-        if (ptr != health && ptr != disclaimer) return;
         try
         {
             // Run the original timeline setup, then apply its end values BEFORE rendering.
             // Calling the callback alone leaves controller/visibility/alpha state unfinished.
             __instance.Stop(true, true);
             noticeSkipped = true;
-            ClearContractResidue(launch);
+            ClearContractResidue(launch!);
             pending = launch;
             instance!.LoggerInstance.Msg(ptr == health ? "Skipped health bulletin." : "Skipped disclaimer.");
         }
@@ -113,23 +127,28 @@ public sealed class IntroSkipMod : MelonMod
         if (splashFrames-- > 0) StopSplash();
         var view = pending;
         pending = null;
-        if (view == null || disabled) return;
-        try
+        if (view != null && !disabled)
         {
-            // Defer until Deal has finished updating IsFirstEnterLaunch, avoiding reentry.
-            view.SkipDeal();
-            ClearContractResidue(view);
-            LoggerInstance.Msg("Resumed vanilla launch flow after skipped notice.");
+            try
+            {
+                // Defer until Deal has finished updating IsFirstEnterLaunch, avoiding reentry.
+                view.SkipDeal();
+                ClearContractResidue(view);
+                LoggerInstance.Msg("Resumed vanilla launch flow after skipped notice.");
+            }
+            catch (Exception ex)
+            {
+                disabled = true;
+                LoggerInstance.Error($"Failed to resume launch flow: {ex}");
+            }
         }
-        catch (Exception ex)
-        {
-            disabled = true;
-            LoggerInstance.Error($"Failed to resume launch flow: {ex}");
-        }
+        // After the pending step: a notice found now is resumed on the next frame, as with the old _Play postfix.
+        CheckNotices();
     }
 
     private static void BeforeLaunchUpdate(UILaunchView __instance)
     {
+        if(!disabled && launch?.Pointer == __instance.Pointer) CheckNotices();
         if(disabled || !noticeSkipped || launch?.Pointer != __instance.Pointer)return;
         try { ClearContractResidue(__instance); }
         catch(Exception ex)
@@ -143,7 +162,7 @@ public sealed class IntroSkipMod : MelonMod
     {
         // FairyGUI timelines can change visibility after the launch view's UpdateHook.
         // Keep cleanup limited to the launch instance whose notices we actually skipped.
-        if(launch!=null)BeforeLaunchUpdate(launch);
+        if(launch!=null)BeforeLaunchUpdate(launch); // also checks the two notices (0.1.4)
     }
 
     private static void ClearContractResidue(UILaunchView view)
