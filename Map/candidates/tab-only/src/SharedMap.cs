@@ -67,7 +67,8 @@ internal static class SharedMap
         H(typeof(UIMapHarbourIcon), "_InitComponent_b__16_0", nameof(PortClick));
         EntryPoint.InputHandler(CaptureClose); // 0.2.4: shared Core input gate (was a prefix on InputSystemManager.OnEventCaptureInput)
         EntryPoint.Hook(typeof(UIMapView), "Refresh", typeof(SharedMap), after: nameof(MapRefresh));
-        EntryPoint.Hook(typeof(UIMapHarbourIcon), "UpdateInfo", typeof(SharedMap), before: nameof(BeforePortInfo), after: nameof(PortRefresh), final: nameof(AfterPortInfo));
+        // 0.2.5: no hook on UIMapHarbourIcon.UpdateInfo (900-1,700 calls/s at sea for every map icon). Route-session
+        // visuals are re-applied from the existing UIMapView.Refresh postfix, only for icons in view, only in a session.
         EntryPoint.Hook(typeof(UIMapHandler), "TouchPortOrAreaListUI", typeof(SharedMap), after: nameof(OverList));
     }
     private static void H(Type type, string method, string handler, Type[]? args = null) =>
@@ -396,30 +397,19 @@ internal static class SharedMap
     }
     private static bool RouteIcon(UIMapHarbourIcon icon)
         => routeMode && session && map != null && icon.IsInit && icon.Model?.Pointer == map.Model.Pointer;
-    private static void BeforePortInfo(UIMapHarbourIcon __instance, out int __state)
+    // Runs inside UIMapView.Refresh after the native UpdateInViewIcons has redrawn the visible icons
+    // (UpdateInfo rewrites url and ctrlSelfPort every call, so the red state is re-applied here).
+    private static void RefreshVisible()
     {
-        __state = -1;
-        if (!routeMode || !session || !RoutePortVisuals.Native) return;
-        if (!RouteIcon(__instance)) return;
-        int id = __instance.HarbourId;
-        if (Reachable(id)) return;
-        __state = RoutePortVisuals.Begin(map!, id);
-        MapDiag.NativeRed();
-    }
-    private static Exception? AfterPortInfo(Exception? __exception, int __state)
-    {
-        if (__state >= 0 && map != null) RoutePortVisuals.End(map, __state);
-        return __exception;
-    }
-    private static void PortRefresh(UIMapHarbourIcon __instance)
-    {
-        if (session) MapDiag.PortInfo();
-        RefreshPort(__instance, true);
+        var model = map!.Model; var icons = model.HarbourIcons; var inView = model.InViewIcons;
+        if (icons == null || inView == null) return;
+        foreach (int id in inView)
+            if (icons.TryGetValue(id, out var icon) && icon != null) { MapDiag.PortInfo(); RefreshPort(icon, true); }
     }
     private static void RefreshPort(UIMapHarbourIcon __instance, bool nativeRefresh)
     {
         if (!RouteIcon(__instance)) return;
-        if (!RoutePortVisuals.Native) RoutePortVisuals.Apply(__instance, Reachable(__instance.HarbourId), nativeRefresh);
+        RoutePortVisuals.Apply(__instance, Reachable(__instance.HarbourId), nativeRefresh);
         var flag = __instance.Component?.TryCast<Il2CppMap.UIHarbourIcon>()?.imgRedFlag;
         if (flag == null || flag.isDisposed) return;
         if (!flags.ContainsKey(flag.Pointer)) flags.Add(flag.Pointer, (flag, flag.visible));
@@ -428,6 +418,7 @@ internal static class SharedMap
     private static void MapRefresh(UIMapView __instance)
     {
         if (session && map?.View?.Pointer == __instance.Pointer) MapDiag.View();
+        if (session && routeMode && map?.View?.Pointer == __instance.Pointer) RefreshVisible();
         if (session && map?.View?.Pointer == __instance.Pointer && mapInfo != null && !mapInfo.isDisposed) mapInfo.visible = false;
     }
     private static void OverList(UIMapHandler __instance, ref bool __result)

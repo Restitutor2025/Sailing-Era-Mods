@@ -8,6 +8,10 @@ using Il2CppMap;
 namespace Restitutor.Map;
 
 // Unreachable route ports are drawn red.
+// 0.2.5: the UpdateInfo hook is gone, so the 0.2.3 native branch (per-call _eMapUseType switch) is not used; a
+// session-wide _eMapUseType=1 changes port selection and the commerce UI (rejected). Icons are recoloured from the
+// UIMapView.Refresh postfix. Mode "controller" (default, under test) sets only ctrlSelfPort=2; mode "url" also swaps
+// the icon url (0.2.1 look; the native UpdateInfo resets it every Refresh, during a route session only).
 // 0.2.3 native path: the original UIMapHarbourIcon.UpdateInfo already has a red-port branch
 // (0x5E4DE4..0x5E4F1B): UIMapCtrl._eMapUseType(+0x68)==1 and UIMapCtrl.RedPort(+0x78)
 // contains HarbourId(+0x38) -> IconUtils.GetRedHarbourIcon + ctrlSelfPort=2. For an unreachable
@@ -61,6 +65,7 @@ internal static class RoutePortVisuals
 
     // --- legacy path (0.2.1) -----------------------------------------------------------
     private static readonly Dictionary<IntPtr, (UIHarbourIcon ui, string url, int state)> saved = new();
+    internal static bool UrlMode;
     internal static void Apply(UIMapHarbourIcon icon, bool reachable, bool nativeRefresh)
     {
         var ui = icon.Component?.TryCast<UIHarbourIcon>();
@@ -68,7 +73,7 @@ internal static class RoutePortVisuals
         if (nativeRefresh || !saved.ContainsKey(ui.Pointer))
             saved[ui.Pointer] = (ui, ui.loaderIcon.url, ui.ctrlSelfPort.selectedIndex);
         var baseline = saved[ui.Pointer];
-        ui.loaderIcon.url = reachable ? baseline.url : IconUtils.GetRedHarbourIcon(TemplateManager.GetPort(icon.HarbourId).mapIcon);
+        if (UrlMode) ui.loaderIcon.url = reachable ? baseline.url : IconUtils.GetRedHarbourIcon(TemplateManager.GetPort(icon.HarbourId).mapIcon);
         ui.ctrlSelfPort.selectedIndex = reachable ? baseline.state : 2;
     }
 
