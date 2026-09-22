@@ -7,8 +7,10 @@ namespace Il2CppClient.WorldLogic.Scenes {
         public SceneState.SceneStateType SceneStateType = SceneState.SceneStateType.Sailing;
         public bool IsInBattle;
         public Team? _focusTeam = new();
+        public FocusRef? FocusBoatReference = new();
         public T? TryCast<T>() where T:class => this as T;
     }
+    class FocusRef { public Il2CppClient.WorldLogic.Entity.Component.Boat.BoatEntityOceanDriver? LeaderDirectionMove; }
     class Team { public IntPtr Pointer = (IntPtr)99; public bool isPlayer = true; public Il2CppClient.Const.EBoatTeamState State; }
 }
 namespace Il2CppClient.WorldLogic.Entity.Data {
@@ -19,6 +21,7 @@ namespace Il2CppClient.WorldLogic.Entity.Component.Boat {
     class BoatEntityOceanDriver {
         public Il2CppClient.WorldLogic.Entity.Data.Boat? boatData;
         public float forwardPowerFactorByEscape = 1;
+        private static int next = 1000; public IntPtr Pointer = (IntPtr)(next++);
     }
 }
 namespace Il2CppCore.SceneSystem {

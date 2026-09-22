@@ -1,1 +1,1 @@
-<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><AssemblyName>Restitutor_Cheats_Contribution</AssemblyName><Version>1.1.3</Version></PropertyGroup><ItemGroup><ProjectReference Include="../Interface/Restitutor_Cheats_Interface.csproj" /></ItemGroup></Project>
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><AssemblyName>Restitutor_Cheats_Contribution</AssemblyName><Version>1.1.4</Version></PropertyGroup><ItemGroup><ProjectReference Include="../Interface/Restitutor_Cheats_Interface.csproj" /></ItemGroup></Project>
