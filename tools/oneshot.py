@@ -1,9 +1,9 @@
 # Generates <name>.ps1 + <name>.bat: game closed + Core check -> hash-checked install -> branch from origin/main
 # (requires the previous branch to be merged) -> commits -> push -> open PR page.
 import sys,json
-def make(name,branch,desc,installs,commits,requires_merged=None,rollback='',core_ok=None):
+def make(name,branch,desc,installs,commits,requires_merged=None,rollback='',core_ok=None,session='https://claude.ai/code/session_01QAvCUBF7RSjUXDbamCbmja'):
     core_ok=core_ok or ['928E5F54948C12F769085780447F7E4647B14C86BA076EA0ABEEA7AC55E28027']
-    TR='Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>'; SE='Claude-Session: https://claude.ai/code/session_01QAvCUBF7RSjUXDbamCbmja'
+    TR='Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>'; SE='Claude-Session: '+session
     L=['\ufeff# '+name+': '+desc,'# Run with the game closed. Safe to run again.'+(' Roll back: '+rollback if rollback else ''),
     "$ErrorActionPreference='Continue'",
     "$p='E:\\Documents\\ChatGPT\\Sailing_era_Restitutor'; $g='E:\\Program\\steam\\steamapps\\common\\Sailing Era'",
