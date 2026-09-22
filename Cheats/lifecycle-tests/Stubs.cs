@@ -74,7 +74,8 @@ namespace Il2CppFairyGUI {
 namespace Il2CppCore.SceneSystem {
     public class SceneManager {
         public static SceneManager Instance=new();
-        public bool IsSceneEntered=true, IsInLoadingOrStarting, IsInHarborScene=true, IsInOceanScene;
+        public bool IsSceneEntered=true, IsInLoadingOrStarting, IsInHarborScene=true, IsInOceanScene, IsInLandScene;
+        public bool IsInHarborOceanOrLand=>IsInHarborScene||IsInOceanScene||IsInLandScene;
         public Il2CppClient.WorldLogic.Scenes.OceanScene Ocean=new();
         public Il2CppClient.WorldLogic.Scenes.OceanScene CurScene()=>Ocean;
     }

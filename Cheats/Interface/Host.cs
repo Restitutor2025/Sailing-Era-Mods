@@ -10,7 +10,7 @@ using Il2CppFairyGUI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[assembly: MelonInfo(typeof(Restitutor.Cheats.Interface.Host), "Restitutor Cheats Interface", "1.6.0", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.Cheats.Interface.Host), "Restitutor Cheats Interface", "1.6.1", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.Cheats.Interface;
 public sealed class Host : MelonMod {
@@ -80,7 +80,7 @@ public sealed class Host : MelonMod {
             hooks.Input("Cheats Interface",_ => Capture());
             Enabled=true;
         })) return;
-        log.Msg("Cheats Interface 1.6.0 loaded (Restitutor.Core "+CoreInfo.Version+", shared input gate; window meshes redrawn only when their size changes). O = all cheats off/on (process lifetime), H = fold/unfold; per-panel width and mouse-wheel scrolling.");
+        log.Msg("Cheats Interface 1.6.1 loaded (in play only; Restitutor.Core "+CoreInfo.Version+", shared input gate; window meshes redrawn only when their size changes). O = all cheats off/on (process lifetime), H = fold/unfold; per-panel width and mouse-wheel scrolling.");
     }
     private static void Loaded(PlayerData __instance)=>Player=__instance;
     private static void Ready(PlayerDataManager __instance)=>Player=__instance.Data;
@@ -181,17 +181,20 @@ public sealed class Host : MelonMod {
         if(!Enabled) return;
         try {
             bool hDown=Keyboard.current?.hKey.isPressed==true;
-            bool canToggle=Application.isFocused && Player!=null && panels.Count>0 &&
+            // 1.6.1: the window exists only in play (city, sea or land scene of the loaded save); never on the
+            // title screen, while loading, or after returning to the title with a stale save reference.
+            bool inGame=PlayLocation.InGame();
+            bool canToggle=Application.isFocused && inGame && panels.Count>0 &&
                 GRoot.inst.focus?.TryCast<GTextInput>()==null;
             bool oDown=Keyboard.current?.oKey.isPressed==true;
-            bool canSwitch=Application.isFocused && panels.Count>0 && GRoot.inst.focus?.TryCast<GTextInput>()==null;
+            bool canSwitch=Application.isFocused && inGame && panels.Count>0 && GRoot.inst.focus?.TryCast<GTextInput>()==null;
             if(window.PollO(oDown,canSwitch)) {
                 if(!window.CheatsOn) { ReleaseFocus(); ResetPanels(); ClearView(); }
                 log.Msg(window.CheatsOn ? "O: cheats ON (window restored; multipliers start at X1)." : "O: cheats OFF (window hidden; every panel reset to original).");
             }
             if(!window.CheatsOn) { if(root!=null) ClearView(); return; }
             if(window.PollH(hDown,canToggle)) { ReleaseFocus(); dragging=scrolling=false; SwallowInput(); }
-            if(Player==null || panels.Count==0) { ClearView(); return; }
+            if(!inGame || panels.Count==0) { if(root!=null) ClearView(); return; }
             var stage=GRoot.inst;
             if(window.ObserveLocation(PlayLocation.Current())) { ReleaseFocus(); dragging=scrolling=false; }
             if(root==null || root.isDisposed || root.parent?.Pointer!=stage.Pointer) {

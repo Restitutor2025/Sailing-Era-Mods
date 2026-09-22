@@ -93,6 +93,15 @@ UnityEngine.Application.isFocused=true;host.OnUpdate();Check(!speed.Container.vi
 keyboard.hKey.isPressed=false;host.OnUpdate();keyboard.hKey.isPressed=true;host.OnUpdate();Check(speed.Container.visible);
 keyboard.hKey.isPressed=false;host.OnUpdate();
 Call("ResetSession");Call("Loaded",new PlayerData());host.OnUpdate();Check(speed.Container!.visible);
+// 1.6.1: only in play. Title/entry scene, loading, or a stale save reference: no window, O/H ignored.
+var sceneStub=Il2CppCore.SceneSystem.SceneManager.Instance; Check(GRoot.inst.Children.Count==1);
+sceneStub.IsInHarborScene=false; host.OnUpdate(); Check(GRoot.inst.Children.Count==0);
+keyboard.oKey.isPressed=true; host.OnUpdate(); keyboard.oKey.isPressed=false; host.OnUpdate(); Check(Host.CheatsOn); Check(GRoot.inst.Children.Count==0);
+sceneStub.IsInLandScene=true; host.OnUpdate(); Check(GRoot.inst.Children.Count==1); sceneStub.IsInLandScene=false;
+sceneStub.IsInHarborScene=true; sceneStub.IsInLoadingOrStarting=true; host.OnUpdate(); Check(GRoot.inst.Children.Count==0);
+sceneStub.IsInLoadingOrStarting=false; host.OnUpdate(); Check(GRoot.inst.Children.Count==1);
+var managerData=Il2CppClient.Manager.PlayerDataManager.Instance.Data; Il2CppClient.Manager.PlayerDataManager.Instance.Data=new PlayerData{Pointer=(IntPtr)99};
+host.OnUpdate(); Check(GRoot.inst.Children.Count==0); Il2CppClient.Manager.PlayerDataManager.Instance.Data=managerData; host.OnUpdate(); Check(GRoot.inst.Children.Count==1);
 Find(GRoot.inst,"CheatClose").onClick.Fire();host.OnUpdate();Check(!GRoot.inst.Children.Single().visible);
 Call("ResetSession");Call("Loaded",new PlayerData());host.OnUpdate();Check(!GRoot.inst.Children.Single().visible);
 var later=new TestPanel("later",30,100);Host.Register(later);host.OnUpdate();Check(!GRoot.inst.Children.Single().visible);Host.Unregister(later);
