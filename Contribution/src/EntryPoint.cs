@@ -11,7 +11,7 @@ using Il2CppClient.UILogic.UIGovHouse;
 using Il2CppClient.UILogic.UIMarket;
 using SceneManager = Il2CppCore.SceneSystem.SceneManager;
 
-[assembly: MelonInfo(typeof(Restitutor.Contribution.EntryPoint), "Restitutor fixes Contribution", "0.5.6", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.Contribution.EntryPoint), "Restitutor fixes Contribution", "0.5.7", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.Contribution;
 public sealed class EntryPoint : MelonMod
@@ -65,7 +65,7 @@ public sealed class EntryPoint : MelonMod
             hooks!.Input("Contribution", _ => CaptureInput());
             Enabled = true;
         })) { Enabled = false; return; }
-        Log.Msg("Contribution 0.5.6 loaded (Restitutor.Core " + CoreInfo.Version + ", shared input gate; harbor HUD check and benefit text on events: focus, main UI, city/port, notices). City benefits visible only on focused harbor main screen.");
+        Log.Msg("Contribution 0.5.7 loaded (Restitutor.Core " + CoreInfo.Version + ", shared input gate; harbor HUD check and benefit text on events: focus, main UI, city/port, notices). City benefits visible only on focused harbor main screen.");
     }
     // Same lookup as 0.5.5: inherited members included (declaredOnly: false), exact parameter types when given.
     private void Hook(Type type, string method, string? before = null, string? after = null, string? finalizer = null, Type[]? args = null)
