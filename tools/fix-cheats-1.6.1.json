@@ -1,0 +1,37 @@
+{
+ "name": "fix-cheats-1.6.1",
+ "branch": "fix/cheats-in-play-only",
+ "desc": "Cheats Interface 1.6.1 - the cheat window exists only in play (city/sea/land scene of the loaded save), never on the title screen or while loading.",
+ "rollback": "Cheats\\releases\\1.6.0\\Restitutor_Cheats_Interface.dll over the installed file.",
+ "requires_merged": "fix/contribution-assets",
+ "core_ok": [
+  "36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"
+ ],
+ "installs": [
+  [
+   "Cheats\\releases\\1.6.1\\Restitutor_Cheats_Interface.dll",
+   "Mods\\Cheats\\Restitutor_Cheats_Interface.dll",
+   "EA03DCC7C4A2E8843E77E589E8A26059304A1FCD14F099B488A1ACBEF96F81CA"
+  ]
+ ],
+ "commits": [
+  [
+   [
+    "Cheats/Interface",
+    "Cheats/lifecycle-tests",
+    "docs/mods/cheat/1.6.1.md"
+   ],
+   "fix(cheats): show the cheat window only in play (Interface 1.6.1)",
+   "The window, H and O now require the loaded save to be the current PlayerDataManager data and a city/sea/land scene that is entered and not loading. Previously Player stayed set after returning to the title, so the window appeared on the title screen."
+  ],
+  [
+   [
+    "tools/fix-cheats-1.6.1.json",
+    "fix-cheats-1.6.1.ps1",
+    "fix-cheats-1.6.1.bat"
+   ],
+   "chore: Cheats Interface 1.6.1 install script",
+   ""
+  ]
+ ]
+}
