@@ -71,6 +71,7 @@ namespace Il2CppClient.UILogic.UIMap
     {
         public int DirtyCalls; public void ClearAllLaneIcon() {}
         public Dictionary<int, UIMapHarbourIcon> HarbourIcons = new();
+        public HashSet<int> InViewIcons = new();
         public MapViewMode ViewMode = MapViewMode.Area;
         public void MarkDirty() => DirtyCalls++;
     }

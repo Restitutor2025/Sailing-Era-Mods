@@ -89,6 +89,7 @@ Begin();
 stale.Callback();
 Check(Flag("session")&&UIMapCtrl.Instance.View.Open,"stale close timer cannot close reopened route");
 Reset();Begin();
+typeof(Restitutor.Map.RoutePortVisuals).GetField("UrlMode",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static)!.SetValue(null,true);
 var portIcon=UIMapCtrl.Instance.Model.HarbourIcons[20];
 var portUi=(Il2CppMap.UIHarbourIcon)portIcon.Component!;
 UISailLineCtrl.Instance.Model.TotalPortDic[20].MeasureCanReach=false;
@@ -101,40 +102,30 @@ UISailLineCtrl.Instance.Model.TotalPortDic[20].NoLineReach=false;
 Call("RefreshPort",portIcon,false);
 Check(portUi.loaderIcon.url=="red:port","missing route also becomes red");
 portUi.loaderIcon.url="native-updated";portUi.ctrlSelfPort.selectedIndex=0;
-Call("PortRefresh",portIcon);
+Call("RefreshPort",portIcon,true);
 Call("Restore");
 Check(portUi.loaderIcon.url=="native-updated" && portUi.ctrlSelfPort.selectedIndex==0,"close restores latest native baseline");
 UISailLineCtrl.Instance._playerData.PlayerPort.StayInPortId=20;
 Call("RefreshPort",portIcon,false);
 Check(portUi.loaderIcon.url=="native-updated","current port is always reachable");
-// 0.2.3 native red-port path. The double below mirrors the native branch at 0x5E4DE4.
-Reset();Il2CppInterop.Runtime.IL2CPP.NativeLayout=true;typeof(Restitutor.Map.SharedMap).GetField("verified",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static)!.SetValue(null,false);Begin();
-Check((bool)typeof(Restitutor.Map.RoutePortVisuals).GetProperty("Native",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static)!.GetValue(null)!,"layout 0x68/0x78/0x38 enables native path");
-var nIcon=UIMapCtrl.Instance.Model.HarbourIcons[20];var nUi=(Il2CppMap.UIHarbourIcon)nIcon.Component!;
+// 0.2.5: no UpdateInfo hook. The UIMapView.Refresh postfix re-applies route visuals to icons in view.
+Reset();Begin();
+var rIcon=UIMapCtrl.Instance.Model.HarbourIcons[20];var rUi=(Il2CppMap.UIHarbourIcon)rIcon.Component!;
 UISailLineCtrl.Instance._playerData.PlayerPort.StayInPortId=0;
-void NativeUpdate(UIMapHarbourIcon icon){
-  var args=new object?[]{icon,null};
-  typeof(Restitutor.Map.SharedMap).GetMethod("BeforePortInfo",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static)!.Invoke(null,args);
-  var ui=(Il2CppMap.UIHarbourIcon)icon.Component!;var m=UIMapCtrl.Instance;
-  bool red=m._eMapUseType==EMapUseType.Commerce&&m.RedPort.Contains(icon.HarbourId);
-  ui.loaderIcon.url=red?"red:port":"normal";ui.ctrlSelfPort.selectedIndex=red?2:1;
-  Call("PortRefresh",icon);
-  typeof(Restitutor.Map.SharedMap).GetMethod("AfterPortInfo",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static)!.Invoke(null,new object?[]{null,args[1]});
-}
 UISailLineCtrl.Instance.Model.TotalPortDic[20].MeasureCanReach=false;UISailLineCtrl.Instance.Model.TotalPortDic[20].NoLineReach=true;
-NativeUpdate(nIcon);
-Check(nUi.loaderIcon.url=="red:port"&&nUi.ctrlSelfPort.selectedIndex==2,"native branch draws unreachable port red");
-Check(UIMapCtrl.Instance._eMapUseType==EMapUseType.Normal,"use type restored after the call");
-Check(UIMapCtrl.Instance.RedPort.Count(x=>x==20)==1,"id added to RedPort once");
-NativeUpdate(nIcon);Check(UIMapCtrl.Instance.RedPort.Count(x=>x==20)==1&&nUi.loaderIcon.url=="red:port","repeated frames keep one entry and the same url");
-UISailLineCtrl.Instance.Model.TotalPortDic[20].NoLineReach=false;NativeUpdate(nIcon);Check(nUi.loaderIcon.url=="red:port","missing route stays red");
-UISailLineCtrl.Instance.Model.TotalPortDic[20].MeasureCanReach=true;UISailLineCtrl.Instance.Model.TotalPortDic[20].NoLineReach=true;NativeUpdate(nIcon);
-Check(nUi.loaderIcon.url=="normal"&&nUi.ctrlSelfPort.selectedIndex==1&&UIMapCtrl.Instance._eMapUseType==EMapUseType.Normal,"reachable port drawn by the untouched native path");
-UISailLineCtrl.Instance._playerData.PlayerPort.StayInPortId=20;UISailLineCtrl.Instance.Model.TotalPortDic[20].MeasureCanReach=false;NativeUpdate(nIcon);
-Check(nUi.loaderIcon.url=="normal","current port is always reachable (native path)");
-UISailLineCtrl.Instance._playerData.PlayerPort.StayInPortId=0;UIMapCtrl.Instance.RedPort.Add(999);
-Call("Restore");
-Check(!UIMapCtrl.Instance.RedPort.Contains(20)&&UIMapCtrl.Instance.RedPort.Contains(999),"restore removes only ids this session added");
+typeof(Restitutor.Map.RoutePortVisuals).GetField("UrlMode",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static)!.SetValue(null,false);
+void NativeRefresh(){ foreach(var id in UIMapCtrl.Instance.Model.InViewIcons){ var ui=(Il2CppMap.UIHarbourIcon)UIMapCtrl.Instance.Model.HarbourIcons[id].Component!; ui.loaderIcon.url="normal"; ui.ctrlSelfPort.selectedIndex=1; }
+  Call("MapRefresh",UIMapCtrl.Instance.View); }
+UIMapCtrl.Instance.Model.InViewIcons.Clear();NativeRefresh();
+Check(rUi.ctrlSelfPort.selectedIndex!=2,"icons out of view are not touched");
+UIMapCtrl.Instance.Model.InViewIcons.Add(20);NativeRefresh();
+Check(rUi.ctrlSelfPort.selectedIndex==2&&rUi.loaderIcon.url=="normal","controller mode: unreachable in-view port gets state 2, url untouched");
+typeof(Restitutor.Map.RoutePortVisuals).GetField("UrlMode",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static)!.SetValue(null,true);
+NativeRefresh();Check(rUi.ctrlSelfPort.selectedIndex==2&&rUi.loaderIcon.url=="red:port","url mode: red url re-applied after the native redraw");
+UISailLineCtrl.Instance.Model.TotalPortDic[20].MeasureCanReach=true;NativeRefresh();
+Check(rUi.ctrlSelfPort.selectedIndex==1&&rUi.loaderIcon.url=="normal","reachable port keeps the native drawing");
+Call("Restore");Check(UIMapCtrl.Instance.RedPort.Count==0,"RedPort is never touched");
+typeof(Restitutor.Map.RoutePortVisuals).GetField("UrlMode",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static)!.SetValue(null,false);
 Il2CppInterop.Runtime.IL2CPP.NativeLayout=false;
 Console.WriteLine($"PASS {count} shared map/input/lifecycle checks. Isolated doubles only; not native execution.");
 

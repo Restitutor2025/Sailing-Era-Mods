@@ -4,7 +4,7 @@ using MelonLoader;
 using Restitutor.Core;
 using UnityEngine.InputSystem;
 
-[assembly: MelonInfo(typeof(Restitutor.Map.EntryPoint), "Restitutor fixes map", "0.2.4", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.Map.EntryPoint), "Restitutor fixes map", "0.2.5", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 
 namespace Restitutor.Map;
@@ -30,13 +30,16 @@ public sealed class EntryPoint : MelonMod
     private static void Install()
     {
         if (!CoreInfo.Require(Log, "0.2.0")) return;
+        var cat = MelonPreferences.CreateCategory("RestitutorMap");
+        var mode = cat.CreateEntry("RedPortMode", "controller", description: "controller = ctrlSelfPort only; url = also swap icon url (0.2.1 look)");
+        RoutePortVisuals.UrlMode = string.Equals(mode.Value, "url", StringComparison.OrdinalIgnoreCase);
         main = Set(typeof(EntryPoint));
         if (main.InstallAll(Log, "Installation", () =>
             {
                 FogLifetime.Install();
                 SharedMap.Install();
             }))
-            Log.Msg("Map 0.2.4 hooks installed (Restitutor.Core " + CoreInfo.Version + ", shared input gate; red ports via the native UpdateInfo branch, no per-frame icon overwrite; [MAPDIAG] counters). No save files are edited by this mod.");
+            Log.Msg("Map 0.2.5 hooks installed (Restitutor.Core " + CoreInfo.Version + ", shared input gate; no UpdateInfo hook: route-session red ports/flags from the UIMapView.Refresh postfix, red port mode=" + (RoutePortVisuals.UrlMode ? "url" : "controller") + "; [MAPDIAG] counters). No save files are edited by this mod.");
     }
     public override void OnUpdate() => SharedMap.Tick();
     private static HookSet Set(Type handler)
