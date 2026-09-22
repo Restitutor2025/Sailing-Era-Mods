@@ -12,7 +12,7 @@ internal static class SailingSpeed {
     private static string lastError = "";
     private static string lastGate = "";
     internal static string Unavailable { get; private set; } = "항해 준비 중";
-    internal static void Reset() { Multiplier = 1; lastError = lastGate = ""; Unavailable = "항해 준비 중"; }
+    internal static void Reset() { Multiplier = 1; RestoreApplied(); lastError = lastGate = ""; Unavailable = "항해 준비 중"; }
     internal static void Update() {
         // Map/pause keep selection available. Ending the sailing state (including battle and
         // EnterPort) discards the choice even while the ocean scene still exists.
@@ -20,6 +20,43 @@ internal static class SailingSpeed {
         bool available=CanUse();
         string gate=available ? "활성" : Unavailable;
         if (gate != lastGate) { lastGate=gate; EntryPoint.Log.Msg($"Sailing gate: {gate}; selected=X{Multiplier}"); }
+        Reconcile();
+    }
+    // 1.2.0: no hook on BoatEntityOceanDriver.FixedUpdate (it ran for all 40-67 boats, 2,000-2,900 calls/s).
+    // Once per frame (this Update is called from the panel's Refresh) the player's flagship driver gets
+    // forwardPowerFactorByEscape = original x multiplier; it is restored when the choice or the gate ends, the
+    // flagship changes, or the cheat is reset. The game only writes this field on events (ctor 1.0, escape 1.5),
+    // and a value the game wrote is kept as the new original. Pause needs no gate: the native speed product
+    // includes GameModuleSpeedScale, which is 0 while paused.
+    private static BoatEntityOceanDriver? applied;
+    private static SpeedFrame frame;
+    private static BoatEntityOceanDriver? Flagship() {
+        var ocean = SceneManager.Instance?.CurScene()?.TryCast<OceanScene>();
+        var driver = ocean?.FocusBoatReference?.LeaderDirectionMove;
+        var boat = driver?.boatData; var team = boat?.Team;
+        if (driver == null || boat == null || team == null || boat.boatState != EBoatState.DependOnTeam ||
+            !team.isPlayer || team.State != EBoatTeamState.Free || team.Pointer != ocean?._focusTeam?.Pointer) return null;
+        return driver;
+    }
+    private static void Reconcile() {
+        try {
+            var target = Multiplier > 1 && VoyageActive() ? Flagship() : null;
+            if (applied != null && (target == null || applied.Pointer != target.Pointer)) RestoreApplied();
+            if (target == null) return;
+            float current = target.forwardPowerFactorByEscape;
+            if (applied != null && frame.Changed && current == frame.Applied && frame.Applied == frame.Original * Multiplier) return;
+            // New driver, a new multiplier, or the game wrote its own value (kept as the new original).
+            float original = applied != null && frame.Changed && current == frame.Applied ? frame.Original : current;
+            var next = new SpeedFrame(original, Multiplier);
+            if (!next.Changed) { if (applied != null) RestoreApplied(); return; }
+            target.forwardPowerFactorByEscape = next.Applied; frame = next; applied = target;
+        } catch (Exception ex) { Fail(ex); }
+    }
+    private static void RestoreApplied() {
+        var d = applied; applied = null;
+        if (d == null) return;
+        try { d.forwardPowerFactorByEscape = frame.Restore(d.forwardPowerFactorByEscape); } catch { } // destroyed with its scene: nothing to restore
+        frame = default;
     }
     private static bool Deny(string reason) { Unavailable=reason; return false; }
     private static bool VoyageActive() {
@@ -47,32 +84,8 @@ internal static class SailingSpeed {
         try { if (value >= 1 && value <= 5 && CanUse()) Multiplier = value; }
         catch (Exception ex) { Fail(ex); }
     }
-    internal static void Before(BoatEntityOceanDriver driver, out SpeedFrame state) {
-        state = default;
-        try {
-            if (Multiplier == 1) return;
-            if (!VoyageActive()) { Multiplier=1; return; }
-            // UI selection remains available in an ocean Tab menu, but never
-            // apply movement while the game is paused. No map-UI dependency:
-            // UIMapCtrl is also used for the sailing minimap render texture.
-            if (GameManager.IsGamePaused) return;
-            var boat = driver.boatData;
-            var team = boat?.Team;
-            var ocean = SceneManager.Instance.CurScene()?.TryCast<OceanScene>();
-            if (boat == null || boat.boatState != EBoatState.DependOnTeam || team == null ||
-                !team.isPlayer || team.State != EBoatTeamState.Free || team.Pointer != ocean?._focusTeam?.Pointer) return;
-            state = new SpeedFrame(driver.forwardPowerFactorByEscape, Multiplier);
-            if (state.Changed) driver.forwardPowerFactorByEscape = state.Applied;
-        } catch (Exception ex) { Fail(ex); }
-    }
-    internal static void After(BoatEntityOceanDriver driver, SpeedFrame state) {
-        if (!state.Changed) return;
-        try { driver.forwardPowerFactorByEscape = state.Restore(driver.forwardPowerFactorByEscape); }
-        catch (Exception ex) { Fail(ex); }
-        // Harmony finalizer returns void: original exceptions are never suppressed.
-    }
     private static void Fail(Exception ex) {
-        Multiplier = 1;
+        Multiplier = 1; RestoreApplied();
         if (lastError == ex.Message) return;
         lastError = ex.Message;
         EntryPoint.Log.Error("Sailing movement cheat suspended: " + ex);

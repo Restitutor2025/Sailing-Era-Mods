@@ -1,8 +1,7 @@
 using MelonLoader;
 using Il2CppClient.PlayerStore;
-using Il2CppClient.WorldLogic.Entity.Component.Boat;
 using Restitutor.Cheats.Interface;
-[assembly: MelonInfo(typeof(Restitutor.Cheats.Speed.EntryPoint), "Restitutor Cheats Speed","1.1.2", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.Cheats.Speed.EntryPoint), "Restitutor Cheats Speed","1.2.0", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 [assembly: MelonAdditionalDependencies("Restitutor_Cheats_Interface")]
 namespace Restitutor.Cheats.Speed;
@@ -14,12 +13,8 @@ public sealed class EntryPoint : MelonMod {
     private static readonly SpeedPanel panel=new();
     public override void OnInitializeMelon() {
         Log=LoggerInstance;
-        try {
-            Host.Hook(HarmonyInstance,typeof(EntryPoint),typeof(BoatEntityOceanDriver),"FixedUpdate",nameof(BeforeMovement),final:nameof(AfterMovement));
-            loaded=true; Host.Register(panel); Log.Msg("Cheats Speed 1.1.2 loaded (panel redraws only on change).");
-        } catch(Exception ex) { loaded=false; HarmonyInstance.UnpatchSelf(); Log.Error(ex.ToString()); }
+        // 1.2.0: no native hooks (1.1.x prefixed BoatEntityOceanDriver.FixedUpdate for every boat).
+        loaded=true; Host.Register(panel); Log.Msg("Cheats Speed 1.2.0 loaded (panel redraws only on change; no native hooks, player flagship driver only).");
     }
-    private static void BeforeMovement(BoatEntityOceanDriver __instance,out SpeedFrame __state)=>SailingSpeed.Before(__instance,out __state);
-    private static void AfterMovement(BoatEntityOceanDriver __instance,SpeedFrame __state)=>SailingSpeed.After(__instance,__state);
-    public override void OnDeinitializeMelon() { loaded=false; HarmonyInstance.UnpatchSelf(); Host.Unregister(panel); SailingSpeed.Reset(); }
+    public override void OnDeinitializeMelon() { loaded=false; Host.Unregister(panel); SailingSpeed.Reset(); }
 }
