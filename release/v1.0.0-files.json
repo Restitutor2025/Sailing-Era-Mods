@@ -1,0 +1,162 @@
+{
+ "Base": [
+  [
+   "Core\\releases\\0.2.0\\Restitutor.Core.dll",
+   "UserLibs\\Restitutor.Core.dll",
+   "36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E",
+   "Restitutor.Core",
+   "0.2.0"
+  ],
+  [
+   "Contribution\\releases\\0.5.7\\Restitutor_fixes_Contribution.dll",
+   "Mods\\Additional_Functions\\Restitutor_Additional_Contribution_Goods_Recognition.dll",
+   "3DD26315F1DBDCAA48F20BC9E69FBFDAE4D8609C56A718095196BD841BD94F43",
+   "Contribution",
+   "0.5.7"
+  ],
+  [
+   "InstantEntrance\\releases\\0.1.1\\Restitutor_fixes_Instant_Entrance.dll",
+   "Mods\\Additional_Functions\\Restitutor_Additional_Entrance.dll",
+   "431F5B1AC88835BC479F565B22148B02BB581E31E068C4E56F14E3DE647096E1",
+   "Instant Entrance",
+   "0.1.1"
+  ],
+  [
+   "releases\\intro\\0.1.3\\Restitutor_fixes.dll",
+   "Mods\\Additional_Functions\\Restitutor_Additional_IntroSkip.dll",
+   "7C4D7F5C6470236A808BFA83063E3F7818166AECA87F163EE5CF124CFB7F5CB6",
+   "Intro Skip",
+   "0.1.3"
+  ],
+  [
+   "ItemRebuild\\releases\\0.1.23\\Restitutor_Additional_Item_Rebuild.dll",
+   "Mods\\Additional_Functions\\Restitutor_Additional_Item_Rebuild.dll",
+   "7766E3DAF8E859558BA717AE8AE292571CA13A33D8C6E505F461E198F0787BCD",
+   "Item Rebuild",
+   "0.1.23"
+  ],
+  [
+   "StatRank\\releases\\0.1.6\\Restitutor_Additional_Stat_Rank.dll",
+   "Mods\\Additional_Functions\\Restitutor_Additional_Stat_Rank.dll",
+   "1F418BC954030712ED670CB81B8F15E15135C0CFEF5E323BB4EA000F833A830E",
+   "Stat Rank",
+   "0.1.6"
+  ],
+  [
+   "TabCharacters\\releases\\0.6.12\\Restitutor_Additional_Tab_Characters.dll",
+   "Mods\\Additional_Functions\\Restitutor_Additional_Tab_Characters.dll",
+   "0F9C4A6DD38EA19CA495B1FE9676B8FDC9A19F13374403994F2140DD7B1CF411",
+   "Tab Characters",
+   "0.6.12"
+  ],
+  [
+   "TextSpeed\\releases\\0.1.6\\Restitutor_fixes_textspeed.dll",
+   "Mods\\Additional_Functions\\Restitutor_Additional_Textspeed.dll",
+   "3AEF807822EAFF01C1799AE65CD44B71B95A7339C757D263A0A1AA530F7010B6",
+   "Text Speed",
+   "0.1.6"
+  ],
+  [
+   "CTRLInstant\\releases\\0.1.7\\Restitutor_BugFixes_CTRL_Instant.dll",
+   "Mods\\Bug_Fixes\\Restitutor_BugFixes_CTRL_Instant.dll",
+   "66D038C7590D8E364B8D89E0C267E5A927D6B992A050267CF943365EF6023D31",
+   "CTRL Instant",
+   "0.1.7"
+  ],
+  [
+   "FleetInfo\\releases\\0.1.0\\Restitutor_fixes_Fleet_Info.dll",
+   "Mods\\Bug_Fixes\\Restitutor_fixes_Fleet_Info.dll",
+   "41FDB700E43C61C14FC68610A05B8E901C017586990F6A6851E655CFACE1BE48",
+   "Fleet Info",
+   "0.1.0"
+  ],
+  [
+   "Map\\candidates\\tab-only\\dist\\0.2.4\\Restitutor_fixes_map.dll",
+   "Mods\\Bug_Fixes\\Restitutor_fixes_map.dll",
+   "C94E91615C300271CFFE10BC3D06081200EDFB32300B42465FB816DBE8F09597",
+   "Map",
+   "0.2.4"
+  ]
+ ],
+ "Rebalance": [
+  [
+   "DevilFruits\\releases\\0.1.3\\Restitutor_devil_fruits.dll",
+   "Mods\\Rebalance\\Restitutor_devil_fruits.dll",
+   "826CD7F93A22B2E4E83EA78C66EDA2128191D875A671AF6EC455479CD2B1F22C",
+   "Devil Fruits",
+   "0.1.3"
+  ]
+ ],
+ "Cheats": [
+  [
+   "Cheats\\releases\\1.6.0\\Restitutor_Cheats_Interface.dll",
+   "Mods\\Cheats\\Restitutor_Cheats_Interface.dll",
+   "E02EB667FEFB9D79B766C594A08CE3FAD2590753BEF68224127E035FBE05A2E2",
+   "Cheats Interface",
+   "1.6.0"
+  ],
+  [
+   "Cheats\\releases\\1.6.0\\Restitutor_Cheats_Skill.dll",
+   "Mods\\Cheats\\Restitutor_Cheats_Skill.dll",
+   "20BBB0C6EC2AD2454954B5417667B9F70DF4BDC023647929409B85C066716CD2",
+   "Cheats Skill",
+   "1.0.5"
+  ],
+  [
+   "Cheats\\releases\\1.5.1\\Restitutor_Cheats_Speed.dll",
+   "Mods\\Cheats\\Restitutor_Cheats_Speed.dll",
+   "32F6785A5418D7C078B9B239E32B498CCC82429C08DDE03CB66E1CE591716E22",
+   "Cheats Speed",
+   "1.1.2"
+  ],
+  [
+   "Cheats\\releases\\1.5.1\\Restitutor_Cheats_Battle.dll",
+   "Mods\\Cheats\\Restitutor_Cheats_Battle.dll",
+   "90125AA2253C033392BD63E92F8C90C80082D1D1F0483DB08CE00882CB8E344C",
+   "Cheats Battle",
+   "1.0.1"
+  ],
+  [
+   "Cheats\\releases\\1.5.1\\Restitutor_Cheats_Bargirls.dll",
+   "Mods\\Cheats\\Restitutor_Cheats_Bargirls.dll",
+   "1980B122A34D85A5F4F95CBEF019814895DDFD317CF3695F5FC180C790C31A04",
+   "Cheats Bargirls",
+   "1.1.3"
+  ],
+  [
+   "Cheats\\releases\\1.5.1\\Restitutor_Cheats_Contribution.dll",
+   "Mods\\Cheats\\Restitutor_Cheats_Contribution.dll",
+   "7CB78E5362C3A46ACAF79EA0A99338CEE175FAA08FD7BCC177A02A29C7B121FB",
+   "Cheats Contribution",
+   "1.1.2"
+  ],
+  [
+   "Cheats\\releases\\1.5.1\\Restitutor_Cheats_Exp.dll",
+   "Mods\\Cheats\\Restitutor_Cheats_Exp.dll",
+   "D6CC769A875DC9F23284CCE55399CCFD43C0BA631267E72B04C89F4D9C98F8C5",
+   "Cheats Exp",
+   "1.0.1"
+  ],
+  [
+   "Cheats\\releases\\1.5.1\\Restitutor_Cheats_Money.dll",
+   "Mods\\Cheats\\Restitutor_Cheats_Money.dll",
+   "92CD5ACEE595488FE786C24BE0AB460A8B065714AD8D61C1B6CC7B923830B053",
+   "Cheats Money",
+   "1.0.1"
+  ],
+  [
+   "Cheats\\releases\\1.5.1\\Restitutor_Cheats_Character.dll",
+   "Mods\\Cheats\\Restitutor_Cheats_Character.dll",
+   "CB1175B8DD1C4F5B2279BEF368018430FA2F61B7CA1B658BA5697E790B7E4A64",
+   "Cheats Character",
+   "1.1.1"
+  ],
+  [
+   "Cheats\\releases\\items-0.1.0\\Restitutor_Items.dll",
+   "Mods\\Cheats\\Restitutor_Items.dll",
+   "3775B5E6038373380AB5D9E9F068848140D346209E6218ACD53D4F83DD2AB249",
+   "Cheats Items",
+   "0.1.0"
+  ]
+ ]
+}
