@@ -1,0 +1,10 @@
+{"name":"release-rebalance-saveslots-0.1.1","branch":"feat/rebalance-saveslots",
+ "desc":"Rebalance SaveSlots 0.1.1: rows 11+ were blank (enter animation stopped hidden); show them at once, keep selection, count text N/101.",
+ "rollback":"copy RebalanceSaveSlots\\releases\\0.1.0\\Restitutor_Rebalance_SaveSlots.dll over Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll, or delete it",
+ "core_ok":["36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+ "session":"https://claude.ai/code/session_01GA2ihscBe7DquX5AQAzSpW",
+ "installs":[
+  ["RebalanceSaveSlots\\releases\\0.1.1\\Restitutor_Rebalance_SaveSlots.dll","Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll","D0ED7837EFBC46877C78C2BB1C7C061EF42AC42047865FA80A9513B7C3A9C525"]],
+ "commits":[
+  [["RebalanceSaveSlots/Restitutor_Rebalance_SaveSlots.csproj","RebalanceSaveSlots/README.md","RebalanceSaveSlots/src/EntryPoint.cs","RebalanceSaveSlots/src/Rules.cs","RebalanceSaveSlots/tests/Program.cs","docs/mods/rebalance-saveslots/0.1.1.md"],"fix(rebalance-saveslots): show rows 11+ in the save list (0.1.1)","Refresh shrinks the list to 10 before the mod grows it back, so rows 10+ leave the stage while their delayed enter transition (index*0.1 s) waits and FairyGUI stops it in the hidden state. New RenderStorageItem postfix runs aniReset/aniruchang to their end for rows 10+. Refresh postfix re-applies selection 10+ and writes the count text as N/101."],
+  [["tools/release-rebalance-saveslots-0.1.1.json","release-rebalance-saveslots-0.1.1.ps1","release-rebalance-saveslots-0.1.1.bat"],"chore: release script for Rebalance SaveSlots 0.1.1",""]]}
