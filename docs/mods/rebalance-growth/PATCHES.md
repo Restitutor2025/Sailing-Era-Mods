@@ -36,3 +36,9 @@
 | UIHeroLevelUpCtrl.InitMaxContinueLevel | Postfix | 슬라이더 단계·모델 값(MaxContinueLevel/NeedExpFive/AfterEffect) |
 | CurRoleData.GetNeedExpAfterEffect | Postfix | 부분 경험치 뺀 다음 레벨 비용 |
 | UIHeroLevelUpView.RefreshNotMax / RefreshMax | Postfix | 슬라이더 패널 생성·표시, BtnUp 숨김, BtnUpFive 제목·회색 |
+
+## 0.3.1 (+1)
+| 대상 | 종류 | 목적 |
+|---|---|---|
+| UIHeroLevelUpView.GetAddPropByType | Postfix | HP/공격 표시 증가량 /250 |
+| UIHeroLevelUpCtrl.OnClickBtnLevelUp Prefix(기존) | 변경 | 대기 누적값을 지우지 않음 |

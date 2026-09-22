@@ -199,15 +199,17 @@ public sealed partial class EntryPoint {
     // Panel above the level-up buttons (same slider build as Item Rebuild's QuantityTrack).
     private sealed class LevelSlider : IDisposable {
         public readonly IntPtr Five;
-        readonly GButton five; readonly GObject? up; readonly GComponent host,panel;
+        readonly GButton five; readonly GButton? up; readonly GComponent host,panel;
+        GTextField? pointsText;
         readonly GSlider bar; readonly GTextField title,detail; readonly GComponent confirm; GTextField confirmText=null!; GLoader keyQ=null!,keyE=null!;
         readonly GTextField?[] previews=new GTextField?[5];
+        readonly Il2CppUIPub.UICom_Prop?[] props=new Il2CppUIPub.UICom_Prop?[5];
         // Callbacks stay referenced for the process lifetime: native listeners may outlive this object.
         static readonly List<Il2CppSystem.Object> keep=new();
         bool dragging,disposed; int touch=-1,max;
         public bool Alive=>!disposed && !panel.isDisposed && !five.isDisposed;
 
-        public LevelSlider(UIHeroLevelUpView view,GButton five,GObject? up) {
+        public LevelSlider(UIHeroLevelUpView view,GButton five,GButton? up) {
             this.five=five; this.up=up; Five=five.Pointer; host=five.parent;
             // Both native buttons are hidden (user: 1-level and 10-level buttons removed); the panel sits on
             // their area, bottom-aligned with them.
@@ -233,9 +235,16 @@ public sealed partial class EntryPoint {
             // UICommonInputNumView.RefreshUIText: GetInputKeyIcon(5) = L1 / Q, GetInputKeyIcon(6) = R1 / E).
             KeyButton("−",6,32,62,32,5,true,()=>OnStep(-1),out keyQ); KeyButton("+",width-68,32,62,32,6,false,()=>OnStep(1),out keyE);
             confirm=Button("레벨업",width-148,66,140,26,Confirm,out confirmText);
+            // Space / gamepad A fire the hidden 1-level button (UIHeroLevelUpCtrl.OnAction_A 0xB80220 -> BtnUp
+            // FireClick). User: Space must use the slider amount, and do nothing when nothing is chosen, so that
+            // button's click now runs the same confirm as the panel button (its EventBridge callback from
+            // UIHeroLevelUpView.OnInit is replaced). Gamepad X (BtnUpFive) keeps the original handler, which also
+            // uses the slider values written into the model.
+            if(up!=null && !up.isDisposed) { up.onClick.Clear(); Listen(up.onClick,_=>Confirm()); }
             // Next to each ability row (UIPub.UICom_Prop): what the chosen amount does to it.
             var props=new[]{view.Physical,view.Perceive,view.Craft,view.Knowledge,view.Charm};
-            for(int i=0;i<5;i++) previews[i]=Preview(props[i],i==0);
+            for(int i=0;i<5;i++) { this.props[i]=props[i]; previews[i]=Preview(props[i],i==0); }
+            pointsText=PointsLabel(view.ComRole);
             Listen(bar.onTouchBegin,Begin); Listen(bar.onTouchMove,Move); Listen(bar.onTouchEnd,End);
             Listen(grip.onTouchBegin,Begin); Listen(grip.onTouchMove,Move); Listen(grip.onTouchEnd,End);
             Sync();
@@ -252,7 +261,11 @@ public sealed partial class EntryPoint {
         void KeyButton(string sign,float x,float y,float w,float h,int key,bool iconLeft,Action act,out GLoader icon) {
             var b=Button(sign,x,y,w,h,act,out var text);
             float iw=h-6;
-            icon=new GLoader{touchable=false,autoSize=false,fill=FillType.ScaleMatchHeight,align=AlignType.Center,verticalAlign=VertAlignType.Middle};
+            // The key icons are Addressables paths (UIInputKey table, e.g. .../keyboard/ui_common_keyboard_q.png);
+            // only the game's loader class (Core.NewUISystem.MyGLoader, registered as FairyGUI's loader extension)
+            // loads them - a plain GLoader showed nothing (user screenshot).
+            icon=UIObjectFactory.NewObject(ObjectType.Loader)?.TryCast<GLoader>() ?? new Il2CppCore.NewUISystem.MyGLoader();
+            icon.touchable=false; icon.autoSize=false; icon.fill=FillType.ScaleMatchHeight; icon.align=AlignType.Center; icon.verticalAlign=VertAlignType.Middle;
             icon.SetSize(iw,iw); icon.SetXY(iconLeft?3:w-iw-3,3); b.AddChild(icon);
             text.SetSize(w-iw-6,h); text.SetXY(iconLeft?iw+3:3,0);
             SetIcon(icon,key);
@@ -272,17 +285,60 @@ public sealed partial class EntryPoint {
             text=t;
             return b;
         }
+        // Left edge / right edge of the drawn text inside its box (alignment-aware).
+        static float TextLeft(GTextField t) {
+            var a=t.textFormat.align; float w=Math.Min(t.textWidth,t.width);
+            return a==AlignType.Right ? t.x+t.width-w : a==AlignType.Center ? t.x+(t.width-w)/2 : t.x;
+        }
+        static float TextRight(GTextField t)=>TextLeft(t)+Math.Min(t.textWidth,t.width);
+
+        // User: current value pulled left, right after the ability name; the native "+N" (texAddNum) and this
+        // preview follow it tightly, so nothing runs into the next column. Positions are set once per window.
         static GTextField? Preview(Il2CppUIPub.UICom_Prop? prop,bool logIt) {
             var value=prop?.texProp; var host=value?.parent;
             if(prop==null || prop.isDisposed || value==null || host==null) return null;
-            float right=value.x+value.width;
-            var add=prop.texAddNum; if(add!=null && !add.isDisposed && add.parent?.Pointer==host.Pointer) right=Math.Max(right,add.x+add.width);
+            var title=prop.TexTitle;
+            float oldX=value.x;
+            if(title!=null && !title.isDisposed && title.parent?.Pointer==host.Pointer) {
+                float gap=Math.Max(6,value.textFormat.size*.35f);
+                float dx=TextRight(title)+gap-TextLeft(value);
+                if(dx<0) {
+                    value.x+=dx;
+                    var add0=prop.texAddNum;
+                    if(add0!=null && !add0.isDisposed && add0.parent?.Pointer==host.Pointer) add0.x+=dx;
+                }
+            }
             var t=new GTextField{touchable=false,singleLine=true,autoSize=AutoSizeType.Both};
             var src=value.textFormat;
-            t.textFormat=new TextFormat{font=src.font,size=Math.Max(12,(int)(src.size*.8f)),color=new Color(1f,.86f,.45f,1f),align=AlignType.Left};
+            t.textFormat=new TextFormat{font=src.font,size=Math.Max(12,(int)(src.size*.72f)),color=new Color(1f,.86f,.45f,1f),align=AlignType.Left};
             t.text=" "; host.AddChild(t);
-            t.SetXY(right+8,value.y+(value.height-t.height)/2);
-            if(logIt) log.Msg($"[level slider] ability row host {host.width:0}x{host.height:0}; value ({value.x:0},{value.y:0},{value.width:0}x{value.height:0}); preview at ({t.x:0},{t.y:0}).");
+            t.SetXY(TextRight(value)+6,value.y+(value.height-t.height)/2);
+            if(logIt) log.Msg($"[level slider] ability row host {host.width:0}x{host.height:0}; title right {(title==null?-1:TextRight(title)):0}; value x {oldX:0} -> {value.x:0} ({value.width:0}x{value.height:0}); preview at ({t.x:0},{t.y:0}).");
+            return t;
+        }
+        // Next to each preview: after the value, or after the native "+N" while that one shows.
+        static void PlacePreview(Il2CppUIPub.UICom_Prop? prop,GTextField t) {
+            var value=prop?.texProp; if(prop==null || prop.isDisposed || value==null || value.isDisposed) return;
+            float x=TextRight(value)+6;
+            var add=prop.texAddNum;
+            if(add!=null && !add.isDisposed && add.visible && add.parent?.Pointer==t.parent?.Pointer && !string.IsNullOrEmpty(add.text)) x=Math.Max(x,TextRight(add)+6);
+            t.x=x;
+        }
+
+        // Skill points (UIPub.UICom_RoleInfo texTitleSkillPoint / texSkillPoint, top right): both pulled left and
+        // "+N" (points the chosen amount grants) placed after the number.
+        GTextField? PointsLabel(Il2CppUIPub.UICom_RoleInfo? info) {
+            var num=info?.texSkillPoint; var cap=info?.texTitleSkillPoint;
+            if(info==null || info.isDisposed || num==null || num.isDisposed || num.parent==null) return null;
+            float shift=Math.Max(40,num.textFormat.size*2.4f);
+            num.x-=shift;
+            if(cap!=null && !cap.isDisposed && cap.parent?.Pointer==num.parent.Pointer) cap.x-=shift;
+            var t=new GTextField{touchable=false,singleLine=true,autoSize=AutoSizeType.Both};
+            var src=num.textFormat;
+            t.textFormat=new TextFormat{font=src.font,size=src.size,color=new Color(1f,.86f,.45f,1f),align=AlignType.Left};
+            t.text=" "; num.parent.AddChild(t);
+            t.SetXY(TextRight(num)+6,num.y+(num.height-t.height)/2);
+            log.Msg($"[level slider] skill points ({num.x:0},{num.y:0},{num.width:0}x{num.height:0}) shifted {shift:0}; preview at ({t.x:0},{t.y:0}).");
             return t;
         }
         void Listen(EventListener l,Action<EventContext> fn) { var cb=(EventCallback1)fn; keep.Add(cb); l.Add(cb); }
@@ -302,6 +358,7 @@ public sealed partial class EntryPoint {
         public void Show(bool on) {
             if(Alive) { panel.visible=on; five.visible=false; }
             foreach(var t in previews) if(t!=null && !t.isDisposed) t.visible=on;
+            if(pointsText!=null && !pointsText.isDisposed) pointsText.visible=on;
             if(up!=null && !up.isDisposed) up.visible=false;
         }
 
@@ -312,6 +369,7 @@ public sealed partial class EntryPoint {
             if(p==null || p.Steps.Count==0) {
                 title.text="경험치 사용"; detail.text=""; confirm.grayed=true; confirm.touchable=false; five.visible=false;
                 foreach(var t in previews) if(t!=null && !t.isDisposed) t.text="";
+                if(pointsText!=null && !pointsText.isDisposed) pointsText.text="";
                 return;
             }
             max=(int)Math.Min(p.SliderMax,int.MaxValue);
@@ -335,6 +393,13 @@ public sealed partial class EntryPoint {
             for(int i=0;i<5;i++) {
                 var t=previews[i]; if(t==null || t.isDisposed) continue;
                 t.text=g==null ? "" : Rules.Preview(g.Value[i],g.Stored[i],g.Rate[i],s.Levels,g.Max);
+                PlacePreview(props[i],t);
+            }
+            if(pointsText!=null && !pointsText.isDisposed) {
+                int pts=Rules.PointsInRange(p.Level,s.Levels,UIHeroLevelUpModel.LevelGetSkill);
+                pointsText.text=pts>0?$"+{pts}":"";
+                var num=pointsText.parent==null ? null : (planCtrl?.View?.ComRole?.texSkillPoint);
+                if(num!=null && !num.isDisposed) pointsText.x=TextRight(num)+6;
             }
         }
 
@@ -342,6 +407,7 @@ public sealed partial class EntryPoint {
             if(disposed) return; disposed=true; dragging=false;
             if(!panel.isDisposed) panel.Dispose();
             foreach(var t in previews) if(t!=null && !t.isDisposed) t.Dispose();
+            if(pointsText!=null && !pointsText.isDisposed) pointsText.Dispose();
         }
     }
 }

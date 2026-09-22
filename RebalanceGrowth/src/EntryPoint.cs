@@ -19,7 +19,7 @@ namespace Restitutor.RebalanceGrowth;
 // and yields its own 10-level extra grant to this mod. See docs/mods/rebalance-growth/.
 public sealed partial class EntryPoint : MelonMod {
     public const string MelonName="Restitutor Rebalance Growth";
-    public const string Version="0.3.0";
+    public const string Version="0.3.1";
     private const string Baseline="50D53D17829E3E77B9786EA42D998D1AD258F0653846524069F22E5E442EFFCA";
     private static MelonLogger.Instance log=null!;
     private static bool enabled;
@@ -77,6 +77,7 @@ public sealed partial class EntryPoint : MelonMod {
             Patch(typeof(CurRoleData),"GetNeedExpAfterEffect",postfix:nameof(AfterNeedExp));
             Patch(typeof(UIHeroLevelUpView),"RefreshNotMax",postfix:nameof(AfterRefreshNotMax));
             Patch(typeof(UIHeroLevelUpView),"RefreshMax",postfix:nameof(AfterRefreshMax));
+            Patch(typeof(UIHeroLevelUpView),"GetAddPropByType",postfix:nameof(AfterAddProp));   // 0.3.1
             hookSet.Input("Rebalance Growth",OnKey);
             enabled=true;
             ApplyConsts("init");   // tables may already be loaded

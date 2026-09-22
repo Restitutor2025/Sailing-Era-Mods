@@ -20,8 +20,10 @@ public sealed partial class EntryPoint {
     // Order used everywhere below: physical, perceive, craft, knowledge, charm.
     private static readonly string[] StatNames={"physical","perceive","craft","knowledge","charm"};
 
+    // Must not clear growthPending: a second press while the previous level-up still animates reaches this
+    // prefix too (the original then returns at once), and clearing here lost that level's progress (user report:
+    // held/repeated Space -> progress stuck). A pending record is replaced only by a new accepted roll.
     private static void GrowthBefore(UIHeroLevelUpCtrl ctrl) {
-        growthPending=null;
         try { growthBanBefore=ctrl.Model?.BanTouch??true; } catch { growthBanBefore=true; }
     }
 
@@ -70,6 +72,7 @@ public sealed partial class EntryPoint {
     private static void AfterAniResult(UIHeroLevelUpCtrl __instance) {
         var p=growthPending; growthPending=null;
         if(p==null || !enabled || p.Ctrl!=__instance.Pointer) return;
+        try { var cur=__instance.Model?.CurRole; if(cur!=null && cur.RoleId!=p.Role) { log.Warning($"Growth: pending role {p.Role} but window shows {cur.RoleId}; progress not stored."); return; } } catch {}
         try {
             var db=PlayerDataManager.Instance?.Data?.PlayerRole;
             var role=db?.FindHoldRole(p.Role);

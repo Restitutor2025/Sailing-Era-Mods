@@ -45,4 +45,26 @@ public sealed partial class EntryPoint {
         physical=p.BaseData;
         return true;
     }
+
+    // 0.3.1: level-up window "+N" for HP / attack (UIHeroLevelUpView.GetAddPropByType 0xB86A20) still used the
+    // original /100: sum over rows level+1 .. level+n of round((phys + PhysicalResult)/100 + 1) x hp|attackRatio,
+    // n = MaxContinueLevel on the continue path else 1 (user saw +7 HP / +4 attack at physical 78, applied is +5 / +2).
+    // Same inputs, divisor 250 = what UpdateMaxHpValue / UpdateAttack now add (Rules.Gain).
+    private static void AfterAddProp(Il2CppClient.UILogic.UIHeroLevelUp.UIHeroLevelUpView __instance,Il2CppClient.Const.ERolePropertyType __0,ref int __result) {
+        if(!enabled) return;
+        int type=(int)__0; if(type!=7 && type!=8) return;
+        try {
+            var model=__instance._model; var cur=model?.CurRole;
+            if(model==null || cur==null) return;
+            var role=Il2CppClient.Manager.PlayerDataManager.Instance?.Data?.PlayerRole?.FindHoldRole(cur.RoleId);
+            var pp=role?.GetPointProperty(1); if(pp==null) return;
+            int n=model.IsClickContinueBtn ? model.MaxContinueLevel : 1;
+            int phys=pp.BaseData+model.PhysicalResult, sum=0;
+            for(int lv=cur.Level+1;lv<=cur.Level+n;lv++) {
+                var row=TemplateManager.GetRoleLevel(lv); if(row==null) return;   // original returns early too
+                sum+=Rules.Gain(phys,type==7?row.attackRatio:row.hpRatio,Rules.PhysicalDivisor);
+            }
+            __result=sum;
+        } catch(Exception ex) { Fail("hp/attack display",ex); }
+    }
 }
