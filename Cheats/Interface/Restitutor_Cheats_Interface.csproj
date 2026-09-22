@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><AssemblyName>Restitutor_Cheats_Interface</AssemblyName><Version>1.6.0</Version><AssemblyVersion>1.0.0.0</AssemblyVersion><FileVersion>1.6.0.0</FileVersion></PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><AssemblyName>Restitutor_Cheats_Interface</AssemblyName><Version>1.6.1</Version><AssemblyVersion>1.0.0.0</AssemblyVersion><FileVersion>1.6.1.0</FileVersion></PropertyGroup>
   <!-- Restitutor.Core ships separately in UserLibs; never copy it next to the mod. -->
   <ItemGroup><ProjectReference Include="../../Core/Restitutor.Core.csproj"><Private>false</Private></ProjectReference></ItemGroup>
 </Project>
