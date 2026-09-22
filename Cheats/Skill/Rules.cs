@@ -1,8 +1,9 @@
 namespace Restitutor.Cheats.Skill;
 internal static class Rules {
-    // Levels per skill point. 15 is the default the user specified for the original game.
-    internal static readonly int[] Choices={5,10,15};
-    internal const int Default=15;
+    // Levels per skill point. 1.1.0 (user): choices 1/2/5, default 5 (Rebalance Growth sets the game value to 5).
+    // A saved 10 or 15 from 1.0.x is no longer a choice and falls back to the default.
+    internal static readonly int[] Choices={1,2,5};
+    internal const int Default=5;
     internal static bool Valid(int value)=>Array.IndexOf(Choices,value)>=0;
     internal static int Normalize(int value)=>Valid(value)?value:Default;
     // Original rule: leaving level x grants a point when x % interval == 0.
