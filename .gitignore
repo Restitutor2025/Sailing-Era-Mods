@@ -115,6 +115,10 @@
 !/Contribution/*.md
 !/Contribution/build.ps1
 !/Contribution/export-dnspy.ps1
+!/Contribution/assets/
+/Contribution/assets/*
+!/Contribution/assets/*.png
+!/Contribution/assets/README.md
 !/Contribution/src/
 /Contribution/src/*
 !/Contribution/src/*.cs
@@ -241,3 +245,11 @@
 /tools/*
 !/tools/*.py
 !/tools/*.json
+!/fix-*.ps1
+!/fix-*.bat
+!/release-*.ps1
+!/release-*.bat
+!/release/
+/release/*
+!/release/*.md
+!/release/*.json

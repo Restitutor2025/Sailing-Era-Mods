@@ -1,3 +1,6 @@
+# Contribution — 0.5.7 (0.5.6 빌드에서 빠진 UI 그림 리소스 복구, 게임 확인 전)
+[0.5.7](0.5.7.md) · 0.5.6 은 도시 혜택 HUD 그림 누락(Missing UI artwork: city-panel)
+
 # Contribution — 0.5.6 (Core 입력 공통 처리, 기능 변경 없음, 게임 확인 전)
 [0.5.6](0.5.6.md)
 
