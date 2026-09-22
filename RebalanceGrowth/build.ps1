@@ -3,7 +3,7 @@
 $ErrorActionPreference='Stop'
 $here=$PSScriptRoot; $root=Split-Path $here -Parent
 $game='E:\Program\steam\steamapps\common\Sailing Era'
-$version='0.3.0'
+$version='0.3.1'
 $env:APPDATA="$root\Contribution\build-profile"; $env:NUGET_PACKAGES="$root\.packages"
 if(Get-Process SailingEra -ErrorAction SilentlyContinue){ Write-Host 'Game is running. Close it and run again.'; exit 1 }
 dotnet build "$here\Restitutor_Rebalance_Growth.csproj" -c Release -p:NuGetAudit=false

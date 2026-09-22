@@ -1,0 +1,2 @@
+0525549a19d21ff0c799e3290123eff22b75d7eadbdb6315345e34636fa0c4e4  RebalanceGrowth/releases/0.3.1/Restitutor_Rebalance_Growth.dll
+ea65c15777de24ff3f1aeda5504612d48d2b21cd7bc8e323cf6c1dc4ea86687f  StatRank/releases/0.2.1/Restitutor_Additional_Stat_Rank.dll

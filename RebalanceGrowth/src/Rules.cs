@@ -122,6 +122,7 @@ public static class Rules {
     // 0.3.0 (user, 2nd round): slider right end = what reaching the max level costs (or the whole pool if it
     // cannot reach it).
     public static long SliderMax(long pool,long toMax)=>toMax>=0 ? Math.Min(Math.Max(0,pool),toMax) : Math.Max(0,pool);
+    public static string Num(int perMille)=>(perMille/10.0).ToString("0.#",System.Globalization.CultureInfo.InvariantCulture);
     public static string Pct(int perMille)=>(perMille/10.0).ToString("0.#",System.Globalization.CultureInfo.InvariantCulture)+"%";
     // Level-up window, next to each ability: what the chosen amount does (growth is deterministic: preview = result).
     // "+1 · 32.5%→10%" (gain and progress before->after), "누적 32.5%" when no whole level is chosen, "최대" at the cap.
@@ -131,6 +132,7 @@ public static class Rules {
         if(levels<=0 || rate<0) return "누적 "+Pct(before);
         int gain=Grow(cur,stored,rate,levels,max,out int after);
         if(cur+gain>=max) return $"+{gain} · 최대";
-        return (gain>0?$"+{gain} · ":"")+$"{Pct(before)}→{Pct(after)}";
+        // Short form (user: fit beside the value): "+1 · 60→15%".
+        return (gain>0?$"+{gain} · ":"")+$"{Num(before)}→{Pct(after)}";
     }
 }

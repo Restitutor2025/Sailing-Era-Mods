@@ -83,9 +83,16 @@ Check(Rules.ToMax(steps,true)==2400&&Rules.ToMax(steps,false)==-1,"to max");
 Check(Rules.ClampChoice(5000,9000,2400)==2400&&Rules.ClampChoice(2000,9000,2400)==2000&&Rules.ClampChoice(5000,3000,-1)==3000&&Rules.ClampChoice(-5,10,-1)==0,"clamp only above max usable");
 // 0.3.0 2nd round: slider end, preview text.
 Check(Rules.SliderMax(9000,2400)==2400&&Rules.SliderMax(1000,2400)==1000&&Rules.SliderMax(1000,-1)==1000&&Rules.SliderMax(-5,-1)==0,"slider max");
-Check(Rules.Preview(10,0,775,1,500)=="0%→77.5%","A one level");
-Check(Rules.Preview(10,325,775,1,500)=="+1 · 32.5%→10%","A carry +1");
-Check(Rules.Preview(10,0,1000,10,500)=="+10 · 0%→0%","S ten levels");
+Check(Rules.Preview(10,0,775,1,500)=="0→77.5%","A one level");
+Check(Rules.Preview(10,325,775,1,500)=="+1 · 32.5→10%","A carry +1");
+Check(Rules.Preview(10,0,1000,10,500)=="+10 · 0→0%","S ten levels");
 Check(Rules.Preview(10,550,550,0,500)=="누적 55%","no level chosen");
 Check(Rules.Preview(500,300,1000,1,500)=="최대"&&Rules.Preview(499,0,1000,5,500)=="+1 · 최대","cap");
+// 0.3.1 user check (Marin, role 121, Hero row: physical 15, attack 32, hp 93): Lv 16 shows HP 153, attack 62.
+// Physical gains per level-up from the 2026-09-22 20:52-20:54 log; each level adds Gain(physical after that level's stats).
+{int phys=15,hp=93,atk=32; foreach(int g in new[]{0,1,0,1,1,0,1,0,1,0,1,1,1,1,1}){ phys+=g; hp+=Rules.Gain(phys,4f,250f); atk+=Rules.Gain(phys,2f,250f);} 
+ Check(phys==25&&hp==153&&atk==62,$"Marin Lv16 HP {hp} attack {atk}");
+ int hpOld=93; phys=15; foreach(int g in new[]{0,1,0,1,1,0,1,0,1,0,1,1,1,1,1}){ phys+=g; hpOld+=Rules.Gain(phys,4f,100f);} Check(hpOld==168,"original /100 would give 168");}
+// Lv 106 screenshot: physical 78 +1 this level -> native display uses 79: /100 gives +7 HP / +4 attack (shown), /250 gives +5 / +3 (applied).
+Check(Rules.Gain(79,4f,250f)==5&&Rules.Gain(79,2f,250f)==3&&Rules.Gain(79,4f,100f)==7&&Rules.Gain(79,2f,100f)==4,"Lv106 display +7/+4 was /100; applied +5/+3");
 Console.WriteLine($"PASS {checks} rebalance growth checks: values, level rows, 10-level points, next-point label, tip, luck, hp/attack gain, weight, growth %, slider plan, preview.");

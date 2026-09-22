@@ -1,0 +1,2 @@
+PASS 1536 rebalance growth checks: values, level rows, 10-level points, next-point label, tip, luck, hp/attack gain, weight, growth %, slider plan, preview.
+PASS 14 stat rank checks: (rate+1)% rolls, perfect-then-success order, letters, growth rows.
