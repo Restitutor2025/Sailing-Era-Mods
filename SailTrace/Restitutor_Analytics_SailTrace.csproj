@@ -3,7 +3,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>Restitutor_Analytics_SailTrace</AssemblyName>
     <RootNamespace>Restitutor.SailTrace</RootNamespace>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
