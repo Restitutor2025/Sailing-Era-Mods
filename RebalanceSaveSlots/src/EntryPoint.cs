@@ -8,7 +8,7 @@ using Il2CppFairyGUI;
 using Il2CppUISystem;
 using Il2CppClient.Utils;
 
-[assembly: MelonInfo(typeof(Restitutor.RebalanceSaveSlots.EntryPoint), "Restitutor Rebalance SaveSlots", "0.2.2", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.RebalanceSaveSlots.EntryPoint), "Restitutor Rebalance SaveSlots", "0.2.3", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.RebalanceSaveSlots;
 
@@ -30,7 +30,7 @@ namespace Restitutor.RebalanceSaveSlots;
 // Eight postfixes + one shared input handler; originals always run. The history file format is unchanged: without this mod the game reads the first 10.
 public sealed class EntryPoint : MelonMod
 {
-    internal const string Version = "0.2.2";
+    internal const string Version = "0.2.3";
     private static MelonLogger.Instance log = null!;
     private static bool enabled, scrollLogged;
     private static string? lastError;
@@ -57,14 +57,15 @@ public sealed class EntryPoint : MelonMod
             hookSet.Hook(typeof(UIStorageView), "RenderStorageItem", postfix: nameof(AfterRenderItem));
             hookSet.Hook(typeof(UIStorageView), "ShowHook", postfix: nameof(AfterShow));
             hookSet.Hook(typeof(UIStorageView), "HideHook", postfix: nameof(AfterHide));
-            hookSet.Hook(typeof(UIStorageView), "OnListNavigationItemChanged", postfix: nameof(AfterNav));   // 0.2.2 diagnostic
+            hookSet.Hook(typeof(UIStorageView), "OnListNavigationItemChanged", postfix: nameof(AfterNav));
+            hookSet.Hook(typeof(UIStorageView), "OnStorageItemIndexChanged", postfix: nameof(AfterClick));
             hookSet.Hook(typeof(UISystemCtrl), "ReadStorage", postfix: nameof(AfterRead));
             hookSet.Hook(typeof(UISystemCtrl), "SaveStorage", postfix: nameof(AfterSave));
             Nav.Init(log);
             hookSet.Input("Rebalance SaveSlots", Nav.OnKey);
             enabled = true;
         })) { enabled = false; return; }
-        log.Msg($"Rebalance SaveSlots {Version} loaded (Restitutor.Core {CoreInfo.Version}); 9 hooks. Slots {Rules.OriginalCount} -> {Rules.Total} ({Rules.AutoCount} auto + {Rules.ManualCount} manual).");
+        log.Msg($"Rebalance SaveSlots {Version} loaded (Restitutor.Core {CoreInfo.Version}); 10 hooks. Slots {Rules.OriginalCount} -> {Rules.Total} ({Rules.AutoCount} auto + {Rules.ManualCount} manual).");
     }
 
     private static void AfterInitialize(StorageHistoryManager __instance)
@@ -164,7 +165,13 @@ public sealed class EntryPoint : MelonMod
     private static void AfterNav()
     {
         if (!enabled) return;
-        try { Nav.NavChanged(); } catch (Exception ex) { Fail("OnListNavigationItemChanged postfix", ex); }
+        try { Nav.NavChanged(); Nav.SelectionChanged(); } catch (Exception ex) { Fail("OnListNavigationItemChanged postfix", ex); }
+    }
+
+    private static void AfterClick()
+    {
+        if (!enabled) return;
+        try { Nav.SelectionChanged(); } catch (Exception ex) { Fail("OnStorageItemIndexChanged postfix", ex); }
     }
 
     private static void AfterRead(UISystemCtrl __instance)

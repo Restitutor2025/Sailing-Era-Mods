@@ -38,18 +38,31 @@ public static class Rules
     public static int ReselectAfterGrow(int selected, int listCount) =>
         selected >= OriginalCount && selected < listCount ? selected : -1;
 
-    /// <summary>Rows moved per Q / E press (user: page-turn feel).</summary>
+    /// <summary>Rows per page (user: page-turn feel; 101 rows = 21 pages, the last one holds row 100 only).
+    /// Pages start at row 0: page 1 = auto 0,1 + manual 1..3, page 2 = manual 4..8, …</summary>
     public const int Page = 5;
 
-    /// <summary>Row to select after a Q (dir -1) or E (dir +1) press. -1 = nothing to do.</summary>
-    public static int Paged(int current, int dir, int count)
+    public static int PageCount(int count) => count <= 0 ? 0 : (count + Page - 1) / Page;
+
+    public static int PageOf(int row) => row <= 0 ? 0 : row / Page;
+
+    /// <summary>First row of a page (clamped to the list).</summary>
+    public static int PageStart(int page, int count)
     {
         if (count <= 0) return -1;
-        int from = current < 0 ? 0 : current >= count ? count - 1 : current;
-        int to = from + dir * Page;
-        if (to < 0) to = 0;
-        if (to > count - 1) to = count - 1;
-        return to == current ? -1 : to;
+        int pages = PageCount(count);
+        if (page < 0) page = 0;
+        if (page > pages - 1) page = pages - 1;
+        return page * Page;
+    }
+
+    /// <summary>Q (dir -1) / E (dir +1): first row of the previous / next page. -1 = already at the end.</summary>
+    public static int PageStep(int current, int dir, int count)
+    {
+        if (count <= 0) return -1;
+        int p = PageOf(Math.Min(current, count - 1)), np = p + dir;
+        if (np < 0 || np > PageCount(count) - 1) return -1;
+        return np * Page;
     }
 
     /// <summary>Row to focus when the save/load screen opens: the slot used in this run (save or load),
