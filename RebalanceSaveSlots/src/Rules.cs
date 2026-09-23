@@ -65,6 +65,16 @@ public static class Rules
         return np * Page;
     }
 
+    /// <summary>Newest manual save (rows 2..) by save time; auto saves 0,1 are skipped (user 2026-09-23:
+    /// the game's GetLatestStorageIndex picked the auto save). -1 when no manual slot is used.</summary>
+    public static int LatestManual(IReadOnlyList<(bool used, long ticks)> rows)
+    {
+        int best = -1; long t = long.MinValue;
+        for (int i = AutoCount; i < rows.Count; i++)
+            if (rows[i].used && rows[i].ticks > t) { t = rows[i].ticks; best = i; }
+        return best;
+    }
+
     /// <summary>Row to focus when the save/load screen opens: the slot used in this run (save or load),
     /// else the game's own latest-save slot, else the first row.</summary>
     public static int FocusRow(int lastUsed, int latest, int count)

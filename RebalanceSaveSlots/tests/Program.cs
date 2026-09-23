@@ -28,6 +28,9 @@ Check(Rules.PageStep(-1, 1, 101) == 5 && Rules.PageStep(0, 1, 0) == -1, "no sele
 Check(Rules.FocusRow(37, 4, 101) == 37, "focus: slot used in this run");
 Check(Rules.FocusRow(-1, 4, 101) == 4, "focus: latest save");
 Check(Rules.FocusRow(-1, -1, 101) == 0 && Rules.FocusRow(150, 200, 101) == 0, "focus: fallback to row 0");
+var rows = new List<(bool, long)> { (true, 900), (true, 800), (true, 100), (false, 0), (true, 500), (true, 300) };
+Check(Rules.LatestManual(rows) == 4, "latest manual skips auto 0,1 and empty rows");
+Check(Rules.LatestManual(new List<(bool, long)> { (true, 9), (true, 8), (false, 0) }) == -1, "no manual save -> -1");
 
 Console.WriteLine($"PASS {pass} FAIL {fail}");
 return fail == 0 ? 0 : 1;
