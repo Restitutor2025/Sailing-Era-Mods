@@ -1,0 +1,10 @@
+== Il2CppGyyx.Template.TemplateManager : Il2CppSystem.Object [Assembly-CSharp.dll]
+  static Void InitGameConst(ByteBuffer bytes)
+  static Void InitNpcShipTeam(ByteBuffer bytes)
+  prop Dictionary`2 _gameConst
+  prop Dictionary`2 _npcShipTeam
+== Il2CppGyyx.Template.NpcShipTeam : Il2CppSystem.Object [Assembly-CSharp.dll]
+  prop Int32 flagShip
+  prop Il2CppStructArray`1 otherShips
+== Il2CppGyyx.Template.GameConst : Il2CppSystem.Object [Assembly-CSharp.dll]
+  prop String value
