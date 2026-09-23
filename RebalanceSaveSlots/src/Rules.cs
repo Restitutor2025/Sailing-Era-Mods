@@ -37,4 +37,28 @@ public static class Rules
     /// only 10 rows clears the selection for index 10+. Returns the index to re-apply, or -1.</summary>
     public static int ReselectAfterGrow(int selected, int listCount) =>
         selected >= OriginalCount && selected < listCount ? selected : -1;
+
+    /// <summary>Rows moved per Q / E press (user: page-turn feel).</summary>
+    public const int Page = 5;
+
+    /// <summary>Row to select after a Q (dir -1) or E (dir +1) press. -1 = nothing to do.</summary>
+    public static int Paged(int current, int dir, int count)
+    {
+        if (count <= 0) return -1;
+        int from = current < 0 ? 0 : current >= count ? count - 1 : current;
+        int to = from + dir * Page;
+        if (to < 0) to = 0;
+        if (to > count - 1) to = count - 1;
+        return to == current ? -1 : to;
+    }
+
+    /// <summary>Row to focus when the save/load screen opens: the slot used in this run (save or load),
+    /// else the game's own latest-save slot, else the first row.</summary>
+    public static int FocusRow(int lastUsed, int latest, int count)
+    {
+        if (count <= 0) return -1;
+        if (lastUsed >= 0 && lastUsed < count) return lastUsed;
+        if (latest >= 0 && latest < count) return latest;
+        return 0;
+    }
 }
