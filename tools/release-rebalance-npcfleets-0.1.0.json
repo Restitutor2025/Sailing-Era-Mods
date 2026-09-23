@@ -1,0 +1,10 @@
+{"name":"release-rebalance-npcfleets-0.1.0","branch":"feat/rebalance-npcfleets",
+ "desc":"New mod Rebalance NpcFleets 0.1.0: large Fu ship (300) removed from the NPC purchase list; 7 NPC fleets re-shipped (pirates: 간증선/해창선/개랑선, trade fleets: 복선).",
+ "rollback":"delete Mods\\Rebalance\\Restitutor_Rebalance_NpcFleets.dll",
+ "core_ok":["36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+ "session":"https://claude.ai/code/session_01GA2ihscBe7DquX5AQAzSpW",
+ "installs":[
+  ["RebalanceNpcFleets\\releases\\0.1.0\\Restitutor_Rebalance_NpcFleets.dll","Mods\\Rebalance\\Restitutor_Rebalance_NpcFleets.dll","C7753325475A267D4EA960F05BCD8DDBA4417DFF08336FF62B79191B7EC31A3F"]],
+ "commits":[
+  [["RebalanceNpcFleets","docs/mods/rebalance-npcfleets"],"feat(rebalance-npcfleets): no large Fu ship for NPCs (0.1.0)","New mod Restitutor_Rebalance_NpcFleets 0.1.0 (Mods/Rebalance). Two postfixes on table load: TemplateManager.InitGameConst drops 300 from NPC_BUY_SHIP_LIST, TemplateManager.InitNpcShipTeam re-ships the 7 fleets that used a large Fu ship (pirates: 3293 flagship, 3291/3294 escorts; trade fleets: 3290), only when a row still equals the original. New saves; fleets already stored in a save keep their ships."],
+  [["tools/release-rebalance-npcfleets-0.1.0.json","release-rebalance-npcfleets-0.1.0.ps1","release-rebalance-npcfleets-0.1.0.bat"],"chore: release script for Rebalance NpcFleets 0.1.0",""]]}
