@@ -1,0 +1,10 @@
+{"name":"release-rebalance-saveslots-0.2.0","branch":"feat/saveslots-focus-paging",
+ "desc":"Rebalance SaveSlots 0.2.0: open on the slot you last saved/loaded, Q/E page by 5 rows, key hint under the list.",
+ "rollback":"copy RebalanceSaveSlots\\releases\\0.1.1\\Restitutor_Rebalance_SaveSlots.dll over Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll",
+ "core_ok":["36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+ "session":"https://claude.ai/code/session_01GA2ihscBe7DquX5AQAzSpW",
+ "installs":[
+  ["RebalanceSaveSlots\\releases\\0.2.0\\Restitutor_Rebalance_SaveSlots.dll","Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll","DFE142DAA5F920967798FB1692F116845868BD01CE303A7D1A5B3C4C69E792E6"]],
+ "commits":[
+  [["RebalanceSaveSlots/Restitutor_Rebalance_SaveSlots.csproj","RebalanceSaveSlots/README.md","RebalanceSaveSlots/src/EntryPoint.cs","RebalanceSaveSlots/src/Nav.cs","RebalanceSaveSlots/src/Rules.cs","RebalanceSaveSlots/tests/Program.cs","docs/mods/rebalance-saveslots/0.2.0.md"],"feat(rebalance-saveslots): focus the last used slot, Q/E page by 5, key hint (0.2.0)","ShowHook always selected row 0; the screen now opens on the slot used in this run (ReadStorage/SaveStorage postfixes remember Model.SelectedStorageIndex), else StorageHistoryManager.GetLatestStorageIndex. Q/E (gamepad L1/R1) move the selection 5 rows through the Core input gate without swallowing input, and a hint line with the game's key icons is drawn under the list. Requires Restitutor.Core 0.2.0+."],
+  [["tools/release-rebalance-saveslots-0.2.0.json","release-rebalance-saveslots-0.2.0.ps1","release-rebalance-saveslots-0.2.0.bat"],"chore: release script for Rebalance SaveSlots 0.2.0",""]]}
