@@ -8,7 +8,7 @@ using Il2CppFairyGUI;
 using Il2CppUISystem;
 using Il2CppClient.Utils;
 
-[assembly: MelonInfo(typeof(Restitutor.RebalanceSaveSlots.EntryPoint), "Restitutor Rebalance SaveSlots", "0.2.0", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.RebalanceSaveSlots.EntryPoint), "Restitutor Rebalance SaveSlots", "0.2.1", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.RebalanceSaveSlots;
 
@@ -30,7 +30,7 @@ namespace Restitutor.RebalanceSaveSlots;
 // Eight postfixes + one shared input handler; originals always run. The history file format is unchanged: without this mod the game reads the first 10.
 public sealed class EntryPoint : MelonMod
 {
-    internal const string Version = "0.2.0";
+    internal const string Version = "0.2.1";
     private static MelonLogger.Instance log = null!;
     private static bool enabled, scrollLogged;
     private static string? lastError;
