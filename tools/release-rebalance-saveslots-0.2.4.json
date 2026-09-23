@@ -1,0 +1,10 @@
+{"name":"release-rebalance-saveslots-0.2.4","branch":"feat/saveslots-focus-paging",
+ "desc":"Rebalance SaveSlots 0.2.4: Q/E act on phase Started, pager clicks via opaque boxes, focus falls back to the newest manual save.",
+ "rollback":"copy RebalanceSaveSlots\\releases\\0.2.3\\Restitutor_Rebalance_SaveSlots.dll over Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll",
+ "core_ok":["36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+ "session":"https://claude.ai/code/session_01GA2ihscBe7DquX5AQAzSpW",
+ "installs":[
+  ["RebalanceSaveSlots\\releases\\0.2.4\\Restitutor_Rebalance_SaveSlots.dll","Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll","A266C0ABB47FBF901BEB6D052827391BCCB32BC966C74D46A44915DA067DB5DD"]],
+ "commits":[
+  [["RebalanceSaveSlots/Restitutor_Rebalance_SaveSlots.csproj","RebalanceSaveSlots/src/EntryPoint.cs","RebalanceSaveSlots/src/Nav.cs","RebalanceSaveSlots/src/Rules.cs","RebalanceSaveSlots/tests/Program.cs","docs/mods/rebalance-saveslots/0.2.4.md"],"fix(rebalance-saveslots): Q/E on Started, clickable pager boxes, focus newest manual save (0.2.4)","The game sends Action_LB/Action_RB with phases Started and Canceled only, so Q/E now act on Started. Pager items sit in opaque GComponent boxes that take the click (logged). With no slot used in this run the screen opens on the newest manual save by timeOfStorage; auto saves 0 and 1 are skipped."],
+  [["tools/release-rebalance-saveslots-0.2.4.json","release-rebalance-saveslots-0.2.4.ps1","release-rebalance-saveslots-0.2.4.bat"],"chore: release script for Rebalance SaveSlots 0.2.4",""]]}
