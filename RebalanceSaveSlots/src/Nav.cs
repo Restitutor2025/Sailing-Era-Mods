@@ -8,17 +8,21 @@ using Il2CppClient.PlayerStore.StorageHistory;
 
 namespace Restitutor.RebalanceSaveSlots;
 
-// Save/load list navigation (0.2.0).
-//  - Focus: the game's UIStorageView.ShowHook (0x6635C0) always selects row 0 (GetChildAt(0).selected = true,
-//    model.SelectedStorageIndex = 0, ScrollToView(0)). With 101 rows the user wants the slot they last used.
-//  - Q / E: the save screen has no L1/R1 action of its own (UISystemCtrl has OnAction_A/B/Y only), so the
-//    keys are free; one press moves the selection 5 rows and puts it at the top of the list (page turn).
-//    Selecting a row is what the game's own click handler does (OnStorageItemIndexChanged 0x6633F0:
-//    model.SelectedStorageIndex = row; no Refresh), so save/load act on the selected row as before.
-//  - Hint: the game's bottom tip bar is table-driven (UIOperationTips), so the mod draws its own line
-//    under the "저장 수: N/101" text (user 2026-09-23): [Q key] [<] 5칸씩 이동 [>] [E key], with the key icons
-//    and the arrows the game's own quantity popup uses (UICompInputNum.btnReduce / btnAdd) and the same
-//    text style as that count text.
+// Save/load list navigation.
+//  - Focus (0.2.0): the game's UIStorageView.ShowHook (0x6635C0) always selects row 0 (GetChildAt(0).selected,
+//    model.SelectedStorageIndex = 0, ScrollToView(0)). The screen opens on the slot used in this run (save or
+//    load), else StorageHistoryManager.GetLatestStorageIndex (0x9CE610: newest timeOfStorage of the used rows).
+//    0.2.2: applied right after ShowHook as well as on the next Refresh (0.2.1 only waited for a Refresh,
+//    which did not move the focus from the title screen; user 2026-09-23) and logged once per open.
+//  - Q / E: the save screen has no L1/R1 action of its own (UISystemCtrl has OnAction_A/B/Y only); one press
+//    moves the selection 5 rows and puts it at the top of the list. Selecting a row is what the game's own
+//    handlers do (OnStorageItemIndexChanged 0x6633F0 / OnListNavigationItemChanged 0x6647E0:
+//    model.SelectedStorageIndex = row; no Refresh). ListNavigation.OnFindNex reads GList.selectedIndex, so
+//    keyboard/gamepad navigation continues from the row the mod selects.
+//  - Hint (0.2.2, user): under "저장 수: N/101": [Q key] [<] 5칸씩 이동 [>] [E key]; key icons 2.5x (65),
+//    arrows = Common package image ui_common_arrow_02 (left one flipped), text style copied from the count text.
+//  - Diagnostics (0.2.2, temporary): Q/E never reached the handler in 0.2.0/0.2.1 (no log line) and S moved two
+//    rows; while the screen is open the first 40 input events and navigation changes are logged.
 internal static class Nav
 {
     private static MelonLogger.Instance log = null!;
@@ -29,6 +33,8 @@ internal static class Nav
     private static int lastUsed = -1;      // slot saved to / loaded from in this run
     private static bool pendingFocus;
     private static bool geometryLogged;
+    private const int DiagCap = 40;
+    private static int diagInputs, diagNav, inputsSeen;
 
     internal static void Init(MelonLogger.Instance logger) => log = logger;
 
@@ -43,11 +49,17 @@ internal static class Nav
 
     internal static void Shown(UIStorageView v)
     {
-        view = v; pendingFocus = true;
+        view = v; model = v._model;
+        var gl = v.UIContent?.listStorage;
+        if (gl != null) list = gl;
+        diagInputs = 0; diagNav = 0; inputsSeen = 0;
+        pendingFocus = true;
+        if (gl != null && gl.numItems > 0) Focus("ShowHook");
     }
 
     internal static void Hidden()
     {
+        if (view != null) log.Msg($"[diag] storage screen closed; input events seen while open: {inputsSeen}.");
         view = null; list = null; model = null;
         hint?.Dispose(); hint = null;
     }
@@ -59,10 +71,18 @@ internal static class Nav
         if (hint == null || !hint.Alive) { hint?.Dispose(); hint = new Hint(panel, log, ref geometryLogged); }
         if (!pendingFocus) return;
         pendingFocus = false;
+        Focus("Refresh");
+    }
+
+    private static void Focus(string where)
+    {
+        var gl = list;
+        if (gl == null || gl.isDisposed || model == null) return;
         int latest = -1;
         try { latest = StorageHistoryManager.Instance?.GetLatestStorageIndex() ?? -1; } catch { }
         int row = Rules.FocusRow(lastUsed, latest, gl.numItems);
-        if (row > 0) Select(row);
+        if (row >= 0) Select(row);
+        log.Msg($"focus ({where}): used {lastUsed}, latest {latest}, rows {gl.numItems} -> row {row}; list selected {gl.selectedIndex}, model {model.SelectedStorageIndex}.");
     }
 
     private static void Select(int row)
@@ -74,6 +94,14 @@ internal static class Nav
         gl.ScrollToView(row, false, true);   // selected row goes to the top of the list
     }
 
+    /// <summary>UIStorageView.OnListNavigationItemChanged postfix (diagnostic).</summary>
+    internal static void NavChanged()
+    {
+        if (diagNav >= DiagCap) return;
+        diagNav++;
+        log.Msg($"[diag] nav f={Time.frameCount} list selected {list?.selectedIndex ?? -1}, model {model?.SelectedStorageIndex ?? -1}.");
+    }
+
     private static int keyFrame = -1;
     private static string? keyLogged;
 
@@ -81,8 +109,16 @@ internal static class Nav
     internal static bool OnKey(InputAction.CallbackContext c)
     {
         var gl = list; var v = view;
-        if (gl == null || gl.isDisposed || v == null || model == null || !v._isShowing) return true;
+        if (gl == null || gl.isDisposed || v == null || model == null) return true;
         string n = c.action?.name ?? "";
+        inputsSeen++;
+        if (diagInputs < DiagCap)
+        {
+            diagInputs++;
+            bool b = false; try { b = c.ReadValueAsButton(); } catch { }
+            log.Msg($"[diag] input f={Time.frameCount} {n} phase {c.phase} button {b} showing {v._isShowing}.");
+        }
+        if (!v._isShowing) return true;
         int dir = n is "Action_L1" or "Action_LB" ? -1 : n is "Action_R1" or "Action_RB" ? 1 : 0;
         if (dir == 0 || !c.performed || !c.ReadValueAsButton()) return true;
         int f = Time.frameCount * 2 + (dir > 0 ? 1 : 0);
@@ -94,13 +130,13 @@ internal static class Nav
         return true;
     }
 
-    // One line under the count text: [Q] [<] 5칸씩 이동 [>] [E].
-    // Key icons: IconUtils.GetInputKeyIcon(5) = L1/Q, (6) = R1/E (only the game's loader class loads them).
-    // Arrows: the same package items as the quantity popup's - / + buttons (UICompInputNum.btnReduce/btnAdd).
+    // One line under the count text: [Q] [<] 5칸씩 이동 [>] [E], centred on it.
+    // Key icons: IconUtils.GetInputKeyIcon(5) = L1/Q, (6) = R1/E; only the game's loader class loads them.
+    // Arrows: Common package (loaded at launch by GameLaunch.InitCommonRes) item ui_common_arrow_02, 22x30,
+    // pointing right; the left one is the same image flipped.
     private sealed class Hint : IDisposable
     {
-        private const float Icon = 26f, Arrow = 22f, Height = 30f, Width = 320f;
-        private static string? arrowLeftUrl, arrowRightUrl;
+        private const float Key = 65f, KeyGap = 10f, Gap = 16f;
         private readonly GComponent panel;
         private bool disposed;
         public bool Alive => !disposed && !panel.isDisposed && panel.parent != null;
@@ -109,90 +145,87 @@ internal static class Nav
         {
             var anchor = storage.txtStorageNum;              // "저장 수: N/101"
             var host = anchor?.parent ?? storage;
-            float x = anchor != null ? anchor.x + (anchor.width - Width) / 2f : (host.width - Width) / 2f;
-            float y = anchor != null ? anchor.y + anchor.height + 10f : host.height / 2f;
             panel = new GComponent { touchable = false, sortingOrder = int.MaxValue };
-            panel.SetSize(Width, Height);
-            panel.SetXY(x, y);
             host.AddChild(panel);
 
             var format = new TextFormat();
             if (anchor != null) format.CopyFrom(anchor.textFormat);
-            else { format.size = 17; format.color = new Color(.92f, .90f, .82f); }
-            format.align = AlignType.Center;
+            else { format.size = 28; format.color = new Color(.92f, .90f, .82f); }
+            format.align = AlignType.Left;
 
-            FindArrows();
-            bool q = KeyIcon(0f, 5), e = KeyIcon(Width - Icon, 6);
-            bool left = ArrowIcon(Icon + 6f, arrowLeftUrl), right = ArrowIcon(Width - Icon - Arrow - 6f, arrowRightUrl);
-            string text = (q ? "" : "Q ") + (left ? "" : "< ") + "5칸씩 이동" + (right ? "" : " >") + (e ? "" : " E");
-            Text(Icon + Arrow + 10f, Width - 2f * (Icon + Arrow + 10f), format, text);
+            var q = KeyIcon(5, "Q", format); var left = ArrowIcon(true, format);
+            var text = Label("5칸씩 이동", format);
+            var right = ArrowIcon(false, format); var e = KeyIcon(6, "E", format);
+
+            float h = Math.Max(Key, text.height);
+            float x = 0;
+            x = Place(q, x, h) + KeyGap;
+            x = Place(left, x, h) + Gap;
+            x = Place(text, x, h) + Gap;
+            x = Place(right, x, h) + KeyGap;
+            x = Place(e, x, h);
+            panel.SetSize(x, h);
+            float px = anchor != null ? anchor.x + (anchor.width - x) / 2f : (host.width - x) / 2f;
+            float py = anchor != null ? anchor.y + anchor.height + 6f : host.height / 2f;
+            panel.SetXY(px, py);
             if (!logged)
             {
                 logged = true;
-                log.Msg($"storage hint: count text {(anchor == null ? "-" : $"({anchor.x:0},{anchor.y:0},{anchor.width:0}x{anchor.height:0})")}, hint ({x:0},{y:0},{Width:0}x{Height:0}), keys {(q ? "Q" : "-")}/{(e ? "E" : "-")}, arrows {(left ? "<" : "-")}/{(right ? ">" : "-")}.");
+                log.Msg($"storage hint: count text {(anchor == null ? "-" : $"({anchor.x:0},{anchor.y:0},{anchor.width:0}x{anchor.height:0})")}, hint ({px:0},{py:0},{x:0}x{h:0}), keys {Kind(q)}/{Kind(e)}, arrows {Kind(left)}/{Kind(right)} {left.width:0}x{left.height:0}, text {text.width:0}x{text.height:0}.");
             }
         }
 
-        // The quantity popup's − / + buttons are package items; create one more of each for the hint.
-        private static void FindArrows()
+        private static string Kind(GObject o) => o.TryCast<GTextField>() != null ? "text" : "image";
+
+        private float Place(GObject o, float x, float h)
         {
-            if (arrowLeftUrl != null && arrowRightUrl != null) return;
-            GObject? obj = null;
+            o.SetXY(x, (h - o.height) / 2f);
+            panel.AddChild(o);
+            return x + o.width;
+        }
+
+        private static GTextField Label(string s, TextFormat format)
+        {
+            var t = new GTextField { touchable = false, singleLine = true, autoSize = AutoSizeType.Both };
+            t.textFormat = format;
+            t.text = s;
+            return t;
+        }
+
+        private static GObject ArrowIcon(bool left, TextFormat format)
+        {
             try
             {
-                string url = Il2CppCommonPrompt.UICompInputNum.URL;
-                if (string.IsNullOrEmpty(url)) return;
-                obj = UIPackage.CreateObjectFromURL(url);
-                var comp = obj?.TryCast<Il2CppCommonPrompt.UICompInputNum>();
-                if (comp == null) return;
-                arrowLeftUrl = comp.btnReduce?.resourceURL;
-                arrowRightUrl = comp.btnAdd?.resourceURL;
+                var img = UIPackage.CreateObject("Common", "ui_common_arrow_02")?.TryCast<GImage>();
+                if (img != null)
+                {
+                    img.touchable = false;
+                    if (left) img.flip = FlipType.Horizontal;
+                    return img;
+                }
             }
             catch { }
-            finally { try { obj?.Dispose(); } catch { } }
+            return Label(left ? "<" : ">", format);
         }
 
-        private bool ArrowIcon(float x, string? url)
-        {
-            if (string.IsNullOrEmpty(url)) return false;
-            try
-            {
-                var o = UIPackage.CreateObjectFromURL(url);
-                if (o == null) return false;
-                o.touchable = false;
-                o.SetSize(Arrow, Arrow);
-                o.SetXY(x, (Height - Arrow) / 2f);
-                panel.AddChild(o);
-                return true;
-            }
-            catch { return false; }
-        }
-
-        private bool KeyIcon(float x, int key)
+        private static GObject KeyIcon(int key, string letter, TextFormat format)
         {
             try
             {
                 string url = Il2CppClient.Utils.IconUtils.GetInputKeyIcon(key);
-                if (string.IsNullOrEmpty(url)) return false;
-                var loader = UIObjectFactory.NewObject(ObjectType.Loader)?.TryCast<GLoader>()
-                             ?? new Il2CppCore.NewUISystem.MyGLoader();
-                loader.touchable = false; loader.autoSize = false;
-                loader.fill = FillType.ScaleMatchHeight; loader.align = AlignType.Center; loader.verticalAlign = VertAlignType.Middle;
-                loader.SetSize(Icon, Icon); loader.SetXY(x, (Height - Icon) / 2f);
-                panel.AddChild(loader);
-                loader.url = url;
-                return true;
+                if (!string.IsNullOrEmpty(url))
+                {
+                    var loader = UIObjectFactory.NewObject(ObjectType.Loader)?.TryCast<GLoader>()
+                                 ?? new Il2CppCore.NewUISystem.MyGLoader();
+                    loader.touchable = false; loader.autoSize = false;
+                    loader.fill = FillType.ScaleMatchHeight; loader.align = AlignType.Center; loader.verticalAlign = VertAlignType.Middle;
+                    loader.SetSize(Key, Key);
+                    loader.url = url;
+                    return loader;
+                }
             }
-            catch { return false; }
-        }
-
-        private void Text(float x, float w, TextFormat format, string s)
-        {
-            var t = new GTextField { text = s, touchable = false, singleLine = true, autoSize = AutoSizeType.None };
-            t.textFormat = format;
-            t.verticalAlign = VertAlignType.Middle;
-            t.SetXY(x, 0); t.SetSize(w, Height);
-            panel.AddChild(t);
+            catch { }
+            return Label(letter, format);
         }
 
         public void Dispose()
