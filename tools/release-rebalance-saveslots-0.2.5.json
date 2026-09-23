@@ -1,0 +1,10 @@
+{"name":"release-rebalance-saveslots-0.2.5","branch":"feat/saveslots-focus-paging",
+ "desc":"Rebalance SaveSlots 0.2.5: pager centred on the screen, in the band below the bottom chain border (positions from panel objects, no fixed pixels).",
+ "rollback":"copy RebalanceSaveSlots\\releases\\0.2.4\\Restitutor_Rebalance_SaveSlots.dll over Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll",
+ "core_ok":["36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+ "session":"https://claude.ai/code/session_01GA2ihscBe7DquX5AQAzSpW",
+ "installs":[
+  ["RebalanceSaveSlots\\releases\\0.2.5\\Restitutor_Rebalance_SaveSlots.dll","Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll","4EB8556843DD1E396AABB33BAE16C389EAA3A510CCBD946583E832E8EA7678E3"]],
+ "commits":[
+  [["RebalanceSaveSlots/Restitutor_Rebalance_SaveSlots.csproj","RebalanceSaveSlots/src/EntryPoint.cs","RebalanceSaveSlots/src/Nav.cs","docs/mods/rebalance-saveslots/0.2.5.md"],"fix(rebalance-saveslots): centre the pager below the chain border (0.2.5)","The pager is centred on the storage panel and placed in the middle of the band between the bottom chain border (panel child n20/n21) and the panel bottom, recomputed on every Refresh; no fixed pixel positions."],
+  [["tools/release-rebalance-saveslots-0.2.5.json","release-rebalance-saveslots-0.2.5.ps1","release-rebalance-saveslots-0.2.5.bat"],"chore: release script for Rebalance SaveSlots 0.2.5",""]]}
