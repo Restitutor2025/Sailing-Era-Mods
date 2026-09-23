@@ -178,20 +178,6 @@
 !/DevilFruits/tests/*.props
 !/DevilFruits/tests/*.ps1
 
-# Rebalance Shipyard
-!/RebalanceShipyard/
-/RebalanceShipyard/*
-!/RebalanceShipyard/*.csproj
-!/RebalanceShipyard/*.md
-!/RebalanceShipyard/build.ps1
-!/RebalanceShipyard/src/
-/RebalanceShipyard/src/*
-!/RebalanceShipyard/src/*.cs
-!/RebalanceShipyard/tests/
-/RebalanceShipyard/tests/*
-!/RebalanceShipyard/tests/*.cs
-!/RebalanceShipyard/tests/*.csproj
-
 # Rebalance Boarding
 !/RebalanceBoarding/
 /RebalanceBoarding/*
