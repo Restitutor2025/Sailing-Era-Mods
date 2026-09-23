@@ -16,7 +16,9 @@ namespace Restitutor.RebalanceSaveSlots;
 //    Selecting a row is what the game's own click handler does (OnStorageItemIndexChanged 0x6633F0:
 //    model.SelectedStorageIndex = row; no Refresh), so save/load act on the selected row as before.
 //  - Hint: the game's bottom tip bar is table-driven (UIOperationTips), so the mod draws its own line
-//    under the list instead.
+//    under the "저장 수: N/101" text (user 2026-09-23): [Q key] [<] 5칸씩 이동 [>] [E key], with the key icons
+//    and the arrows the game's own quantity popup uses (UICompInputNum.btnReduce / btnAdd) and the same
+//    text style as that count text.
 internal static class Nav
 {
     private static MelonLogger.Instance log = null!;
@@ -54,7 +56,7 @@ internal static class Nav
     internal static void Refreshed(UIStorageView v, UIStoragePanel panel, GList gl)
     {
         view = v; list = gl; model = v._model;
-        if (hint == null || !hint.Alive) { hint?.Dispose(); hint = new Hint(panel, gl, log, ref geometryLogged); }
+        if (hint == null || !hint.Alive) { hint?.Dispose(); hint = new Hint(panel, log, ref geometryLogged); }
         if (!pendingFocus) return;
         pendingFocus = false;
         int latest = -1;
@@ -92,40 +94,81 @@ internal static class Nav
         return true;
     }
 
-    // One line under the list: [Q] 이전 5칸 ... 다음 5칸 [E]. Key icons are the game's own
-    // (IconUtils.GetInputKeyIcon(5) = L1/Q, (6) = R1/E) and only load through the game's loader class.
+    // One line under the count text: [Q] [<] 5칸씩 이동 [>] [E].
+    // Key icons: IconUtils.GetInputKeyIcon(5) = L1/Q, (6) = R1/E (only the game's loader class loads them).
+    // Arrows: the same package items as the quantity popup's - / + buttons (UICompInputNum.btnReduce/btnAdd).
     private sealed class Hint : IDisposable
     {
+        private const float Icon = 26f, Arrow = 22f, Height = 30f, Width = 320f;
+        private static string? arrowLeftUrl, arrowRightUrl;
         private readonly GComponent panel;
         private bool disposed;
         public bool Alive => !disposed && !panel.isDisposed && panel.parent != null;
 
-        public Hint(GComponent host, GList gl, MelonLogger.Instance log, ref bool logged)
+        public Hint(UIStoragePanel storage, MelonLogger.Instance log, ref bool logged)
         {
-            float width = Math.Min(gl.width, 560f), height = 34f;
-            float x = gl.x + (gl.width - width) / 2f;
-            float y = gl.y + gl.height + 6f;
-            if (y + height > host.height) y = gl.y + gl.height - height - 4f;
+            var anchor = storage.txtStorageNum;              // "저장 수: N/101"
+            var host = anchor?.parent ?? storage;
+            float x = anchor != null ? anchor.x + (anchor.width - Width) / 2f : (host.width - Width) / 2f;
+            float y = anchor != null ? anchor.y + anchor.height + 10f : host.height / 2f;
             panel = new GComponent { touchable = false, sortingOrder = int.MaxValue };
-            panel.SetSize(width, height);
+            panel.SetSize(Width, Height);
             panel.SetXY(x, y);
             host.AddChild(panel);
-            var bg = new GGraph { touchable = false };
-            bg.SetXY(0, 0); bg.SetSize(width, height);
-            bg.DrawRect(width, height, 0, Color.clear, new Color(.08f, .09f, .11f, .72f));
-            panel.AddChild(bg);
-            float icon = height - 10f;
-            bool q = Icon(4f, icon, 5), e = Icon(width - icon - 4f, icon, 6);
-            Text(icon + 10f, width / 2f - icon - 14f, AlignType.Left, q ? "이전 5칸" : "Q  이전 5칸");
-            Text(width / 2f + 4f, width / 2f - icon - 14f, AlignType.Right, e ? "다음 5칸" : "다음 5칸  E");
+
+            var format = new TextFormat();
+            if (anchor != null) format.CopyFrom(anchor.textFormat);
+            else { format.size = 17; format.color = new Color(.92f, .90f, .82f); }
+            format.align = AlignType.Center;
+
+            FindArrows();
+            bool q = KeyIcon(0f, 5), e = KeyIcon(Width - Icon, 6);
+            bool left = ArrowIcon(Icon + 6f, arrowLeftUrl), right = ArrowIcon(Width - Icon - Arrow - 6f, arrowRightUrl);
+            string text = (q ? "" : "Q ") + (left ? "" : "< ") + "5칸씩 이동" + (right ? "" : " >") + (e ? "" : " E");
+            Text(Icon + Arrow + 10f, Width - 2f * (Icon + Arrow + 10f), format, text);
             if (!logged)
             {
                 logged = true;
-                log.Msg($"storage list: panel {host.width:0}x{host.height:0}, list ({gl.x:0},{gl.y:0},{gl.width:0}x{gl.height:0}), hint ({x:0},{y:0},{width:0}x{height:0}), key icons {(q ? "Q" : "-")}/{(e ? "E" : "-")}.");
+                log.Msg($"storage hint: count text {(anchor == null ? "-" : $"({anchor.x:0},{anchor.y:0},{anchor.width:0}x{anchor.height:0})")}, hint ({x:0},{y:0},{Width:0}x{Height:0}), keys {(q ? "Q" : "-")}/{(e ? "E" : "-")}, arrows {(left ? "<" : "-")}/{(right ? ">" : "-")}.");
             }
         }
 
-        private bool Icon(float x, float size, int key)
+        // The quantity popup's − / + buttons are package items; create one more of each for the hint.
+        private static void FindArrows()
+        {
+            if (arrowLeftUrl != null && arrowRightUrl != null) return;
+            GObject? obj = null;
+            try
+            {
+                string url = Il2CppCommonPrompt.UICompInputNum.URL;
+                if (string.IsNullOrEmpty(url)) return;
+                obj = UIPackage.CreateObjectFromURL(url);
+                var comp = obj?.TryCast<Il2CppCommonPrompt.UICompInputNum>();
+                if (comp == null) return;
+                arrowLeftUrl = comp.btnReduce?.resourceURL;
+                arrowRightUrl = comp.btnAdd?.resourceURL;
+            }
+            catch { }
+            finally { try { obj?.Dispose(); } catch { } }
+        }
+
+        private bool ArrowIcon(float x, string? url)
+        {
+            if (string.IsNullOrEmpty(url)) return false;
+            try
+            {
+                var o = UIPackage.CreateObjectFromURL(url);
+                if (o == null) return false;
+                o.touchable = false;
+                o.SetSize(Arrow, Arrow);
+                o.SetXY(x, (Height - Arrow) / 2f);
+                panel.AddChild(o);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        private bool KeyIcon(float x, int key)
         {
             try
             {
@@ -135,7 +178,7 @@ internal static class Nav
                              ?? new Il2CppCore.NewUISystem.MyGLoader();
                 loader.touchable = false; loader.autoSize = false;
                 loader.fill = FillType.ScaleMatchHeight; loader.align = AlignType.Center; loader.verticalAlign = VertAlignType.Middle;
-                loader.SetSize(size, size); loader.SetXY(x, 5f);
+                loader.SetSize(Icon, Icon); loader.SetXY(x, (Height - Icon) / 2f);
                 panel.AddChild(loader);
                 loader.url = url;
                 return true;
@@ -143,12 +186,12 @@ internal static class Nav
             catch { return false; }
         }
 
-        private void Text(float x, float w, AlignType align, string s)
+        private void Text(float x, float w, TextFormat format, string s)
         {
             var t = new GTextField { text = s, touchable = false, singleLine = true, autoSize = AutoSizeType.None };
-            t.textFormat = new TextFormat { size = 17, color = new Color(.92f, .90f, .82f), align = align };
+            t.textFormat = format;
             t.verticalAlign = VertAlignType.Middle;
-            t.SetXY(x, 0); t.SetSize(w, 34);
+            t.SetXY(x, 0); t.SetSize(w, Height);
             panel.AddChild(t);
         }
 
