@@ -8,7 +8,7 @@ using Il2CppFairyGUI;
 using Il2CppUISystem;
 using Il2CppClient.Utils;
 
-[assembly: MelonInfo(typeof(Restitutor.RebalanceSaveSlots.EntryPoint), "Restitutor Rebalance SaveSlots", "0.1.1", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.RebalanceSaveSlots.EntryPoint), "Restitutor Rebalance SaveSlots", "0.2.0", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.RebalanceSaveSlots;
 
@@ -24,10 +24,13 @@ namespace Restitutor.RebalanceSaveSlots;
 //  the hidden state) and this mod sets 101 again (rows come back without animation = stay hidden).
 //  Fix: RenderStorageItem postfix shows rows 10+ at their end state. Refresh postfix also re-applies the
 //  selection (set_selectedIndex clears it for index >= child count) and the count text (original: N/10).
-// Four postfixes; originals always run. The history file format is unchanged: without this mod the game reads the first 10.
+// 0.2.0 (user request): the screen opens on the slot used in this run (save or load; else the game's own
+//  latest-save slot) instead of row 0, Q / E move the selection 5 rows (page turn), and a hint line under
+//  the list shows both keys. Details in src/Nav.cs.
+// Eight postfixes + one shared input handler; originals always run. The history file format is unchanged: without this mod the game reads the first 10.
 public sealed class EntryPoint : MelonMod
 {
-    internal const string Version = "0.1.1";
+    internal const string Version = "0.2.0";
     private static MelonLogger.Instance log = null!;
     private static bool enabled, scrollLogged;
     private static string? lastError;
@@ -44,7 +47,7 @@ public sealed class EntryPoint : MelonMod
     [MethodImpl(MethodImplOptions.NoInlining)]
     private void Install()
     {
-        if (!CoreInfo.Require(log, "0.1.0")) return;
+        if (!CoreInfo.Require(log, "0.2.0")) return;   // 0.2.0: HookSet.Input (Q / E)
         hookSet = new HookSet(HarmonyInstance, typeof(EntryPoint));
         if (!hookSet.InstallAll(log, "Rebalance SaveSlots install", () =>
         {
@@ -52,9 +55,15 @@ public sealed class EntryPoint : MelonMod
             hookSet.Hook(typeof(StorageHistoryManager), "_LoadHistoryData_b__19_1", postfix: nameof(AfterLoad));
             hookSet.Hook(typeof(UIStorageView), "Refresh", postfix: nameof(AfterRefresh));
             hookSet.Hook(typeof(UIStorageView), "RenderStorageItem", postfix: nameof(AfterRenderItem));
+            hookSet.Hook(typeof(UIStorageView), "ShowHook", postfix: nameof(AfterShow));
+            hookSet.Hook(typeof(UIStorageView), "HideHook", postfix: nameof(AfterHide));
+            hookSet.Hook(typeof(UISystemCtrl), "ReadStorage", postfix: nameof(AfterRead));
+            hookSet.Hook(typeof(UISystemCtrl), "SaveStorage", postfix: nameof(AfterSave));
+            Nav.Init(log);
+            hookSet.Input("Rebalance SaveSlots", Nav.OnKey);
             enabled = true;
         })) { enabled = false; return; }
-        log.Msg($"Rebalance SaveSlots {Version} loaded (Restitutor.Core {CoreInfo.Version}); 4 hooks. Slots {Rules.OriginalCount} -> {Rules.Total} ({Rules.AutoCount} auto + {Rules.ManualCount} manual).");
+        log.Msg($"Rebalance SaveSlots {Version} loaded (Restitutor.Core {CoreInfo.Version}); 8 hooks. Slots {Rules.OriginalCount} -> {Rules.Total} ({Rules.AutoCount} auto + {Rules.ManualCount} manual).");
     }
 
     private static void AfterInitialize(StorageHistoryManager __instance)
@@ -129,6 +138,7 @@ public sealed class EntryPoint : MelonMod
                 if (txt != null && !string.IsNullOrEmpty(fmt))
                     txt.text = string.Format(fmt, model.CurrentStorageCount, list.Count);
             }
+            Nav.Refreshed(__instance, panel!, gl);
             if (!scrollLogged)
             {
                 scrollLogged = true;
@@ -136,6 +146,30 @@ public sealed class EntryPoint : MelonMod
             }
         }
         catch (Exception ex) { Fail("UIStorageView.Refresh postfix", ex); }
+    }
+
+    private static void AfterShow(UIStorageView __instance)
+    {
+        if (!enabled) return;
+        try { Nav.Shown(__instance); } catch (Exception ex) { Fail("ShowHook postfix", ex); }
+    }
+
+    private static void AfterHide(UIStorageView __instance)
+    {
+        if (!enabled) return;
+        try { Nav.Hidden(); } catch (Exception ex) { Fail("HideHook postfix", ex); }
+    }
+
+    private static void AfterRead(UISystemCtrl __instance)
+    {
+        if (!enabled) return;
+        try { Nav.Used(__instance, "load"); } catch (Exception ex) { Fail("ReadStorage postfix", ex); }
+    }
+
+    private static void AfterSave(UISystemCtrl __instance)
+    {
+        if (!enabled) return;
+        try { Nav.Used(__instance, "save"); } catch (Exception ex) { Fail("SaveStorage postfix", ex); }
     }
 
     // Rows 10+: finish the hide transition, then run the enter transition to its end at once.

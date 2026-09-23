@@ -19,6 +19,14 @@ Check(!Rules.ToRestore(5, 5).Any(), "short file");
 Check(Rules.IsAuto(0) && Rules.IsAuto(1) && !Rules.IsAuto(2) && !Rules.IsAuto(100), "auto = 0,1");
 Check(!Rules.ShowInstantly(0) && !Rules.ShowInstantly(9) && Rules.ShowInstantly(10) && Rules.ShowInstantly(100) && !Rules.ShowInstantly(101), "instant rows 10..100");
 Check(Rules.ReselectAfterGrow(15, 101) == 15 && Rules.ReselectAfterGrow(3, 101) == -1 && Rules.ReselectAfterGrow(101, 101) == -1 && Rules.ReselectAfterGrow(-1, 101) == -1, "reselect only 10..count-1");
+Check(Rules.Page == 5, "page 5");
+Check(Rules.Paged(0, 1, 101) == 5 && Rules.Paged(5, -1, 101) == 0, "page down/up by 5");
+Check(Rules.Paged(98, 1, 101) == 100 && Rules.Paged(100, 1, 101) == -1, "clamp at the last row");
+Check(Rules.Paged(2, -1, 101) == 0 && Rules.Paged(0, -1, 101) == -1, "clamp at the first row");
+Check(Rules.Paged(-1, 1, 101) == 5 && Rules.Paged(0, 1, 0) == -1, "no selection / empty list");
+Check(Rules.FocusRow(37, 4, 101) == 37, "focus: slot used in this run");
+Check(Rules.FocusRow(-1, 4, 101) == 4, "focus: latest save");
+Check(Rules.FocusRow(-1, -1, 101) == 0 && Rules.FocusRow(150, 200, 101) == 0, "focus: fallback to row 0");
 
 Console.WriteLine($"PASS {pass} FAIL {fail}");
 return fail == 0 ? 0 : 1;
