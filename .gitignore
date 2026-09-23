@@ -281,3 +281,17 @@
 /release/*
 !/release/*.md
 !/release/*.json
+
+# Rebalance LandExplore
+!/RebalanceLandExplore/
+/RebalanceLandExplore/*
+!/RebalanceLandExplore/*.csproj
+!/RebalanceLandExplore/*.md
+!/RebalanceLandExplore/build.ps1
+!/RebalanceLandExplore/src/
+/RebalanceLandExplore/src/*
+!/RebalanceLandExplore/src/*.cs
+!/RebalanceLandExplore/tests/
+/RebalanceLandExplore/tests/*
+!/RebalanceLandExplore/tests/*.cs
+!/RebalanceLandExplore/tests/*.csproj

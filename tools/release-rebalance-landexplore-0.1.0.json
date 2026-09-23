@@ -1,0 +1,10 @@
+{"name":"release-rebalance-landexplore-0.1.0","branch":"feat/rebalance-landexplore",
+ "desc":"New mod Rebalance LandExplore 0.1.0: fate coin chance capped at 50% and the shown number made the real chance, then commit and push.",
+ "rollback":"delete Mods\\Rebalance\\Restitutor_Rebalance_LandExplore.dll (nothing is stored in the save)",
+ "core_ok":["36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+ "session":"https://claude.ai/code/session_01CkXRH7KhtbmGaLTaTrgcpH",
+ "installs":[
+  ["RebalanceLandExplore\\releases\\0.1.0\\Restitutor_Rebalance_LandExplore.dll","Mods\\Rebalance\\Restitutor_Rebalance_LandExplore.dll","E9A41BB986B8AD06C5041987D2D3CFED643493F23E13B7BF3F511C5C19B6F03D"]],
+ "commits":[
+  [[".gitignore","RebalanceLandExplore/Restitutor_Rebalance_LandExplore.csproj","RebalanceLandExplore/README.md","RebalanceLandExplore/build.ps1","RebalanceLandExplore/src/EntryPoint.cs","RebalanceLandExplore/src/Rules.cs","RebalanceLandExplore/tests/Program.cs","RebalanceLandExplore/tests/Tests.csproj","docs/mods/rebalance-landexplore/0.1.0.md","docs/mods/rebalance-landexplore/CURRENT.md"],"feat(rebalance-landexplore): cap the fate coin at 50% and make the shown chance the real one","New mod Restitutor_Rebalance_LandExplore 0.1.0 (Mods/Rebalance). Land-explore property checks: the fate coin re-roll chance (CalculateProbability inlined in UILandExploreEventView.ListRoleRender, kept as the maximum over the listed navigators in UILandExploreEventModel.Ratio) is hard-clamped to 50 by a ListRoleRender postfix, and a UILandExploreEventCtrl.ShowRatioResult prefix lowers the roll threshold by one so that Random.Next(0,100) <= t matches the number on the button (the original was one percentage point more generous; shown 0% was really 1%). The deterministic check, the navigator the coin uses and the coin cost are unchanged. Requires Restitutor.Core 0.1.0+."],
+  [["tools/release-rebalance-landexplore-0.1.0.json","release-rebalance-landexplore-0.1.0.ps1","release-rebalance-landexplore-0.1.0.bat"],"chore: release script for Rebalance LandExplore 0.1.0",""]]}
