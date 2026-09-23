@@ -72,6 +72,7 @@ internal static class Nav
     {
         view = v; list = gl; model = v._model;
         if (pager == null || !pager.Alive) { pager?.Dispose(); pager = new Pager(panel, gl, log, ref geometryLogged); }
+        pager.Layout(panel, gl);
         pager.Update(model?.SelectedStorageIndex ?? 0, gl.numItems);
         if (!pendingFocus) return;
         pendingFocus = false;
@@ -173,7 +174,8 @@ internal static class Nav
         return true;
     }
 
-    // Under the list, centred: [Q] < 1 2 … 21 > [E].
+    // [Q] < 1 2 … 21 > [E], centred on the screen, in the band between the bottom chain border and the bottom
+    // of the panel (0.2.5, user: no overlap with the chain, no fixed pixel values — the game resolution may change).
     // Key icons: IconUtils.GetInputKeyIcon(5) = L1/Q, (6) = R1/E, 65 px (user: 2.5x); only the game's loader
     // class loads them. Arrows: Common package (loaded at launch by GameLaunch.InitCommonRes) image
     // ui_common_arrow_02, 22x30, pointing right; the left one is flipped (user's pick). Numbers: the count text's
@@ -222,14 +224,30 @@ internal static class Nav
             x = Place(right, x + ArrowGap - NumGap / 2f) + KeyGap;
             x = Place(e, x);
             panel.SetSize(x, h);
-            // Centred under the list, vertically on the list's bottom edge + 20 (the gap above the frame border).
-            float px = gl.x + (gl.width - x) / 2f, py = gl.y + gl.height + 20f - h / 2f;
-            panel.SetXY(px, py);
+            string where = Layout(storage, gl);
             if (!logged)
             {
                 logged = true;
-                log.Msg($"storage pager: list ({gl.x:0},{gl.y:0},{gl.width:0}x{gl.height:0}) in {host.width:0}x{host.height:0}, pager ({px:0},{py:0},{x:0}x{h:0}), pages {pages}, keys {Kind(q.GetChildAt(0))}/{Kind(e.GetChildAt(0))}, arrows {Kind(left.GetChildAt(0))}/{Kind(right.GetChildAt(0))}.");
+                log.Msg($"storage pager: list ({gl.x:0},{gl.y:0},{gl.width:0}x{gl.height:0}) in {host.width:0}x{host.height:0}, {where}, pager ({panel.x:0},{panel.y:0},{x:0}x{h:0}), pages {pages}, keys {Kind(q.GetChildAt(0))}/{Kind(e.GetChildAt(0))}, arrows {Kind(left.GetChildAt(0))}/{Kind(right.GetChildAt(0))}.");
             }
+        }
+
+        /// <summary>Position from the panel's own objects, on every Refresh (follows size changes):
+        /// x = centre of the pager's parent (the full-screen storage panel), y = middle of the band between the
+        /// bottom chain border (UIStoragePanel children n20/n21 = ui_common_texture_10, in the package at y 1292,
+        /// 18 high) and the bottom of the parent. Without the border: the band below the list.</summary>
+        public string Layout(UIStoragePanel storage, GList gl)
+        {
+            if (!Alive) return "-";
+            var host = panel.parent;
+            GObject? chain = null;
+            try { chain = storage.GetChild("n20") ?? storage.GetChild("n21"); } catch { }
+            float top = chain != null && chain.parent == host ? chain.y + chain.height : gl.y + gl.height;
+            float bottom = host.height;
+            float y = top + (bottom - top - panel.height) / 2f;
+            if (y < top) y = top;                                    // band thinner than the pager: stay below the border
+            panel.SetXY((host.width - panel.width) / 2f, y);
+            return chain != null ? $"chain {chain.name} bottom {top:0}" : $"no chain, list bottom {top:0}";
         }
 
         /// <summary>Highlight the page of <paramref name="row"/>; cheap when nothing changed.</summary>
