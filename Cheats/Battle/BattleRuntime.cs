@@ -10,6 +10,7 @@ namespace Restitutor.Cheats.Battle;
 
 internal static class BattleRuntime {
     internal static readonly Selection Choice=new();
+    internal static readonly Toggles Toggle=new();
     internal static bool Active { get; private set; }
     private static IntPtr oceanId,playerId;
     private static long focusId;
@@ -17,6 +18,12 @@ internal static class BattleRuntime {
     private static readonly Dictionary<IntPtr,UnitLease> units=new();
     private static readonly Dictionary<IntPtr,ShotLease> shots=new();
     private static string lastError="";
+    // 1.1.0 checkboxes: one lease per battle on the controlled ship (= flagship), no hooks, no per-frame search.
+    private static HullLease? hull;
+    private static BoardLink? board;
+    private static IntPtr hullMissing,boardMissing; // entity already searched without result (search once)
+    private static bool linkFault;                  // an exception in the link code: stay off until the battle ends
+    private static volatile bool boardPending;      // set by the game's BoardShootingBegin delegate
 
     private static OceanScene? Resolve() {
         var p=Host.Player;var scene=SceneManager.Instance;
@@ -30,7 +37,9 @@ internal static class BattleRuntime {
     }
     internal static void Update() {
         // 1.0.1: nothing to track or release outside the ocean scene; skip the per-frame lookups.
-        if(!Active && melee==null && units.Count==0 && shots.Count==0 && oceanId==IntPtr.Zero && Choice.Melee==1 && Choice.Cannon==1) {
+        // 1.1.0: the X1..X5 selection is kept between battles, so it no longer blocks this early exit.
+        if(!Active && melee==null && units.Count==0 && shots.Count==0 && oceanId==IntPtr.Zero &&
+            hull==null && board==null) {
             var s=SceneManager.Instance;
             if(s==null || !s.IsInOceanScene) return;
         }
@@ -61,7 +70,59 @@ internal static class BattleRuntime {
             oceanId=ocean.Pointer;playerId=Host.Player!.Pointer;focusId=id;
             Active=true;
             if(melee!=null && !melee.IsDone)ApplyUnits();
+            SyncLinks(ocean);
         } catch(Exception ex) { Fail(ex); }
+    }
+    internal static void SetToggle(bool isBoard,bool on) {
+        Update();Toggle.Set(isBoard,on,Active);
+        Update(); // apply or release now, not next frame
+    }
+    // Called from the game's BeginShooting (physics trigger callback): only record it; act in Update.
+    internal static void OnBoardShootingBegin() { boardPending=true; }
+    private static void SyncLinks(OceanScene ocean) {
+        if(linkFault)return;
+        try {
+            var entity=ocean.GetFocusPlayer();
+            var key=entity?.Pointer ?? IntPtr.Zero;
+            if(Toggle.Hull) {
+                if(hull!=null && hull.Entity!=key)ReleaseHull();
+                if(hull==null && key!=IntPtr.Zero && hullMissing!=key) {
+                    var h=GameLinks.HitHandler(entity);
+                    if(h==null){hullMissing=key;Note("hull lock: controlled ship has no hit handler; not applied");}
+                    else {hull=new HullLease(h,key);hull.Apply();Note("hull lock ON (controlled ship; was "+hull.Original+")");}
+                }
+            } else if(hull!=null)ReleaseHull();
+            if(Toggle.Board) {
+                if(board!=null && board.Entity!=key)ReleaseBoard();
+                if(board==null && key!=IntPtr.Zero && boardMissing!=key) {
+                    var data=entity!.Data?.TryCast<BoatEntityData>();
+                    var s=data?.IsPlayerFlagship==true ? GameLinks.BoardShoot(entity) : null;
+                    if(s==null){boardMissing=key;Note("instant boarding: controlled ship is not the flagship or has no boarding component; not applied");}
+                    else {board=new BoardLink(s,key);GameLinks.Subscribe(s,OnBoardShootingBegin);Note("instant boarding ON (flagship BoardShootingBegin subscribed)");}
+                }
+            } else if(board!=null)ReleaseBoard();
+            if(boardPending) {
+                boardPending=false;
+                if(board!=null && Toggle.Board && melee==null)board.Enter();
+            }
+        } catch(Exception ex) {
+            linkFault=true;ReleaseLinks();
+            EntryPoint.Log?.Error("Battle checkboxes suspended until this sea battle ends: "+ex);
+        }
+    }
+    private static void Note(string message)=>EntryPoint.Log?.Msg(message);
+    private static void ReleaseHull() {
+        var h=hull;hull=null;
+        if(h==null)return;
+        try{h.Restore();Note("hull lock OFF (restored "+h.Original+")");}catch(Exception ex){Log(ex);}
+    }
+    private static void ReleaseBoard() {
+        var b=board;board=null;boardPending=false;
+        if(b==null)return;
+        try{GameLinks.Unsubscribe(b.Shoot);Note("instant boarding OFF (unsubscribed)");}catch(Exception ex){Log(ex);}
+    }
+    private static void ReleaseLinks() {
+        ReleaseHull();ReleaseBoard();boardPending=false;hullMissing=boardMissing=IntPtr.Zero;
     }
     internal static void Select(bool isMelee,int value) {
         Update();Choice.Select(isMelee,value,Active);
@@ -114,19 +175,43 @@ internal static class BattleRuntime {
         foreach(var lease in units.Values)try{lease.Restore();}catch(Exception ex){Log(ex);}
         units.Clear();melee=null;
     }
+    // End of a sea battle (and scene exit): every applied effect is restored/released, but the user's choices
+    // (X1..X5 multipliers and checkboxes) are kept for the next battle (1.1.0, user decision 2026-09-23).
     internal static void Reset() {
-        Active=false;Choice.Reset();ReleaseUnits();
+        Active=false;ReleaseUnits();
         foreach(var lease in shots.Values)try{lease.Restore();}catch(Exception ex){Log(ex);}
         shots.Clear();oceanId=playerId=IntPtr.Zero;focusId=0;
+        ReleaseLinks();linkFault=false;
     }
+    // Session reset (save load, title, O off, panel error, unload): choices back to X1 / unchecked.
+    internal static void ResetSession() { Reset();Choice.Reset();Toggle.Reset(); }
     private static void Fail(Exception ex) {
-        Active=false;ReleaseUnits();
+        Active=false;ReleaseUnits();ReleaseLinks();
         foreach(var lease in shots.Values)try{lease.Restore();}catch(Exception restore){Log(restore);}
         shots.Clear();Log(ex); // suspend effects, never change the user's selection on an error
     }
     private static void Log(Exception ex) {
         if(lastError==ex.Message)return;lastError=ex.Message;
         EntryPoint.Log?.Error("Battle cheat effect suspended; selection retained: "+ex);
+    }
+    private sealed class HullLease {
+        private readonly Il2CppClient.WorldLogic.Entity.Component.Boat.BoatEntityHitHandler handler;
+        internal readonly IntPtr Entity;
+        internal bool Original { get; private set; }
+        internal HullLease(Il2CppClient.WorldLogic.Entity.Component.Boat.BoatEntityHitHandler h,IntPtr entity){handler=h;Entity=entity;}
+        internal void Apply(){Original=handler.lockHealth;handler.lockHealth=true;}
+        // Only undo our own write: if it was already locked, or someone cleared it since, leave it.
+        internal void Restore(){if(!Original && handler.lockHealth)handler.lockHealth=false;}
+    }
+    private sealed class BoardLink {
+        internal readonly Il2CppClient.WorldLogic.Entity.Component.Boat.BoatEntityBoardShoot Shoot;
+        internal readonly IntPtr Entity;
+        internal BoardLink(Il2CppClient.WorldLogic.Entity.Component.Boat.BoatEntityBoardShoot s,IntPtr entity){Shoot=s;Entity=entity;}
+        // Original path: AddProgress -> CheckProgressFull -> ShootingProgressIsFull -> StartMeleeBattleForPlayer.
+        internal void Enter() {
+            int need=BoardRule.Needed(Shoot.ShootProgress,Shoot.targetEnemy?.ShootProgress ?? 0);
+            if(need>0){Shoot.AddProgress(need);Note("instant boarding: +"+need+" progress");}
+        }
     }
     private sealed class UnitLease {
         private readonly CombatUnit unit;
