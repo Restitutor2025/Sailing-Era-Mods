@@ -11,7 +11,8 @@ namespace Restitutor.RebalanceSaveSlots;
 // Save/load list navigation.
 //  - Focus (0.2.0): the game's UIStorageView.ShowHook (0x6635C0) always selects row 0 (GetChildAt(0).selected,
 //    model.SelectedStorageIndex = 0, ScrollToView(0)). The screen opens on the slot used in this run (save or
-//    load), else StorageHistoryManager.GetLatestStorageIndex (0x9CE610: newest timeOfStorage of the used rows).
+//    load), else the newest manual save by timeOfStorage (0.2.4, user: auto saves 0,1 skipped — the game's
+//    GetLatestStorageIndex 0x9CE610 picked auto save 0 at 13:20 over manual 12 at 13:09), else row 0.
 //    0.2.2: applied right after ShowHook as well as on the next Refresh and logged once per open.
 //  - Pages (0.2.3, user; replaces 0.2.0-0.2.2 "5칸씩 이동"): 5 rows per page, 101 rows = 21 pages. Q / E
 //    (gamepad L1 / R1) go to the first row of the previous / next page; the selected row is put at the top
@@ -20,6 +21,9 @@ namespace Restitutor.RebalanceSaveSlots;
 //    do (OnStorageItemIndexChanged 0x6633F0 / OnListNavigationItemChanged 0x6647E0:
 //    model.SelectedStorageIndex = row; no Refresh); ListNavigation.OnFindNex reads GList.selectedIndex, so
 //    keyboard/gamepad navigation continues from the row the mod selects.
+//  - 0.2.4: Q/E arrive as Action_LB / Action_RB with phases Started and Canceled only (never Performed; log
+//    14:49), so a press is phase Started. Pager clicks go to an opaque GComponent around each item (the way
+//    Rebalance Growth's slider buttons work) instead of the text/image itself; clicks are logged.
 //  - Diagnostics (0.2.2, temporary): Q/E never reached the handler in 0.2.0/0.2.1 and S moved two rows; while
 //    the screen is open the first 40 input events and navigation changes are logged.
 internal static class Nav
@@ -78,11 +82,27 @@ internal static class Nav
     {
         var gl = list;
         if (gl == null || gl.isDisposed || model == null) return;
-        int latest = -1;
-        try { latest = StorageHistoryManager.Instance?.GetLatestStorageIndex() ?? -1; } catch { }
+        int latest = LatestManual();
         int row = Rules.FocusRow(lastUsed, latest, gl.numItems);
         if (row >= 0) Select(row);
         log.Msg($"focus ({where}): used {lastUsed}, latest {latest}, rows {gl.numItems} -> row {row}; list selected {gl.selectedIndex}, model {model.SelectedStorageIndex}.");
+    }
+
+    private static int LatestManual()
+    {
+        try
+        {
+            var h = StorageHistoryManager.Instance?._storageHistories;
+            if (h == null) return -1;
+            var rows = new List<(bool used, long ticks)>(h.Count);
+            for (int i = 0; i < h.Count; i++)
+            {
+                var e = h[i];
+                rows.Add(e == null || e.IsEmptyStorage ? (false, 0L) : (true, e.timeOfStorage.Ticks));
+            }
+            return Rules.LatestManual(rows);
+        }
+        catch (Exception ex) { log.Warning($"focus: latest manual save not read ({ex.Message}); row 0."); return -1; }
     }
 
     private static void Select(int row)
@@ -144,7 +164,7 @@ internal static class Nav
         }
         if (!v._isShowing) return true;
         int dir = n is "Action_L1" or "Action_LB" ? -1 : n is "Action_R1" or "Action_RB" ? 1 : 0;
-        if (dir == 0 || !c.performed || !c.ReadValueAsButton()) return true;
+        if (dir == 0 || c.phase != InputActionPhase.Started) return true;   // press = Started (no Performed in this game)
         int f = Time.frameCount * 2 + (dir > 0 ? 1 : 0);
         if (f == keyFrame) return true;      // one step per press even if two action names fire
         keyFrame = f;
@@ -185,20 +205,22 @@ internal static class Nav
             current = new TextFormat(); current.CopyFrom(normal); current.color = Gold; current.bold = true;
 
             int pages = Rules.PageCount(gl.numItems);
-            var q = KeyIcon(5, "Q"); var left = ArrowIcon(true);
-            for (int i = 0; i < pages; i++) numbers.Add(Number(i));
-            var right = ArrowIcon(false); var e = KeyIcon(6, "E");
-            Click(q, () => StepPage(-1)); Click(left, () => StepPage(-1));
-            Click(right, () => StepPage(1)); Click(e, () => StepPage(1));
-
+            for (int i = 0; i < pages; i++) numbers.Add(Label((i + 1).ToString()));
             float h = Key;
             foreach (var n in numbers) h = Math.Max(h, n.height);
+            var q = Hit(KeyIcon(5, "Q"), h, "Q", () => StepPage(-1));
+            var left = Hit(ArrowIcon(true), h, "<", () => StepPage(-1));
+            var nums = new List<GComponent>();
+            for (int i = 0; i < pages; i++) { int page = i; nums.Add(Hit(numbers[i], h, (i + 1).ToString(), () => GoPage(page), NumGap / 2f)); }
+            var right = Hit(ArrowIcon(false), h, ">", () => StepPage(1));
+            var e = Hit(KeyIcon(6, "E"), h, "E", () => StepPage(1));
+
             float x = 0;
-            x = Place(q, x, h) + KeyGap;
-            x = Place(left, x, h) + ArrowGap;
-            for (int i = 0; i < numbers.Count; i++) x = Place(numbers[i], x, h) + (i < numbers.Count - 1 ? NumGap : ArrowGap);
-            x = Place(right, x, h) + KeyGap;
-            x = Place(e, x, h);
+            x = Place(q, x) + KeyGap;
+            x = Place(left, x) + ArrowGap - NumGap / 2f;
+            for (int i = 0; i < nums.Count; i++) x = Place(nums[i], x);
+            x = Place(right, x + ArrowGap - NumGap / 2f) + KeyGap;
+            x = Place(e, x);
             panel.SetSize(x, h);
             // Centred under the list, vertically on the list's bottom edge + 20 (the gap above the frame border).
             float px = gl.x + (gl.width - x) / 2f, py = gl.y + gl.height + 20f - h / 2f;
@@ -206,7 +228,7 @@ internal static class Nav
             if (!logged)
             {
                 logged = true;
-                log.Msg($"storage pager: list ({gl.x:0},{gl.y:0},{gl.width:0}x{gl.height:0}) in {host.width:0}x{host.height:0}, pager ({px:0},{py:0},{x:0}x{h:0}), pages {pages}, keys {Kind(q)}/{Kind(e)}, arrows {Kind(left)}/{Kind(right)}.");
+                log.Msg($"storage pager: list ({gl.x:0},{gl.y:0},{gl.width:0}x{gl.height:0}) in {host.width:0}x{host.height:0}, pager ({px:0},{py:0},{x:0}x{h:0}), pages {pages}, keys {Kind(q.GetChildAt(0))}/{Kind(e.GetChildAt(0))}, arrows {Kind(left.GetChildAt(0))}/{Kind(right.GetChildAt(0))}.");
             }
         }
 
@@ -228,18 +250,23 @@ internal static class Nav
 
         private static string Kind(GObject o) => o.TryCast<GTextField>() != null ? "text" : "image";
 
-        private float Place(GObject o, float x, float h)
+        private float Place(GObject o, float x)
         {
-            o.SetXY(x, (h - o.height) / 2f);
+            o.SetXY(x, 0);
             panel.AddChild(o);
             return x + o.width;
         }
 
-        private GTextField Number(int page)
+        // Opaque box of full pager height around one item (plus pad on both sides); the box takes the click.
+        private static GComponent Hit(GObject content, float h, string name, Action act, float pad = 0f)
         {
-            var t = Label((page + 1).ToString());
-            Click(t, () => GoPage(page));
-            return t;
+            var box = new GComponent { opaque = true };
+            box.SetSize(content.width + pad * 2f, h);
+            content.touchable = false;
+            content.SetXY(pad, (h - content.height) / 2f);
+            box.AddChild(content);
+            Click(box, name, act);
+            return box;
         }
 
         private GTextField Label(string s)
@@ -250,10 +277,20 @@ internal static class Nav
             return t;
         }
 
-        private static void Click(GObject o, Action act)
+        private static int clicksLogged;
+        private static void Click(GObject o, string name, Action act)
         {
             o.touchable = true;
-            var cb = (EventCallback1)(e => { try { e.StopPropagation(); act(); } catch { } });
+            var cb = (EventCallback1)(e =>
+            {
+                try
+                {
+                    e.StopPropagation();
+                    if (clicksLogged < 20) { clicksLogged++; log.Msg($"storage pager: click {name}."); }
+                    act();
+                }
+                catch (Exception ex) { log.Warning($"storage pager: click {name} failed: {ex.Message}"); }
+            });
             keep.Add(cb);
             o.onClick.Add(cb);
         }
