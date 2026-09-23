@@ -1,0 +1,10 @@
+{"name":"release-rebalance-saveslots-0.2.1","branch":"feat/saveslots-focus-paging",
+ "desc":"Rebalance SaveSlots 0.2.1: key hint moves under the save count text as Q < 5칸씩 이동 > E.",
+ "rollback":"copy RebalanceSaveSlots\\releases\\0.2.0\\Restitutor_Rebalance_SaveSlots.dll over Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll",
+ "core_ok":["36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+ "session":"https://claude.ai/code/session_01GA2ihscBe7DquX5AQAzSpW",
+ "installs":[
+  ["RebalanceSaveSlots\\releases\\0.2.1\\Restitutor_Rebalance_SaveSlots.dll","Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll","6799C19C4D98ECC9D7BC9EE57D8F6F3D846628DBF9DAE9A78C2F9F931B7A5AA5"]],
+ "commits":[
+  [["RebalanceSaveSlots/Restitutor_Rebalance_SaveSlots.csproj","RebalanceSaveSlots/src/EntryPoint.cs","RebalanceSaveSlots/src/Nav.cs","docs/mods/rebalance-saveslots/0.2.1.md"],"fix(rebalance-saveslots): key hint under the save count as Q < 5칸씩 이동 > E (0.2.1)","The hint line moves from below the list to just under UIStoragePanel.txtStorageNum, copies that text's TextFormat, and uses the quantity popup's own arrow items (UICompInputNum.btnReduce/btnAdd, created from their resourceURL) between the Q and E key icons."],
+  [["tools/release-rebalance-saveslots-0.2.1.json","release-rebalance-saveslots-0.2.1.ps1","release-rebalance-saveslots-0.2.1.bat"],"chore: release script for Rebalance SaveSlots 0.2.1",""]]}
