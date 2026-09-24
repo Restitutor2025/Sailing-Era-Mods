@@ -21,6 +21,9 @@ Check(!speed.Container!.visible && !contribution.Container!.visible);
 host.OnUpdate();
 Check(contribution.Container!.y==0); Check(speed.Container!.y==224);
 Check(speed.Container.parent!.height==342); Check(GRoot.inst.Children.Count==1);
+// 1.6.3: key hint line under the title, content starts below it; hidden while folded.
+var keyHint=(GTextField)Find(GRoot.inst,"CheatKeyHint");Check(keyHint.text=="[H] 접기·펼치기   [O] 모든 치트 끄기·켜기");Check(keyHint.visible);Check(keyHint.y>=48);
+Check(Find(GRoot.inst,"CheatViewport").y>=keyHint.y+26);Check(GRoot.inst.Children.Single().height==Find(GRoot.inst,"CheatViewport").height+86);
 bool duplicate=false;try{Host.Register(new TestPanel("speed",30,20));}catch(InvalidOperationException){duplicate=true;}Check(duplicate);
 GRoot.inst.focus=speed.Container; Check((bool)Call("Capture")! ==false);
 contribution.Enable=false; host.OnUpdate(); Check(GRoot.inst.focus==speed.Container);
@@ -51,7 +54,7 @@ Check(future.Container!=null);Check(Find(GRoot.inst,"CheatScrollbar").visible);
 var drag=Find(GRoot.inst,"CheatTitleDrag");drag.onTouchBegin.Fire(10,10);drag.onTouchMove.Fire(250,80);drag.onTouchEnd.Fire();
 var moved=GRoot.inst.Children.Single();Check(moved.x>12);float movedX=moved.x;
 Find(GRoot.inst,"CheatMinimize").onClick.Fire();host.OnUpdate();
-Check(!speed.Container!.visible&&!future.Container!.visible);Check(moved.height==48);Check((bool)Call("Capture")! ==false);
+Check(!speed.Container!.visible&&!future.Container!.visible);Check(moved.height==48);Check(!((GTextField)Find(GRoot.inst,"CheatKeyHint")).visible);Check((bool)Call("Capture")! ==false);
 Call("ResetSession");Load();host.OnUpdate();Check(GRoot.inst.Children.Single().height==48);Check(GRoot.inst.Children.Single().x==movedX);
 Find(GRoot.inst,"CheatMinimize").onClick.Fire();host.OnUpdate();
 Check(speed.Container!.visible&&future.Container!.visible);

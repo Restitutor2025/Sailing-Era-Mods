@@ -10,7 +10,7 @@ using Il2CppFairyGUI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[assembly: MelonInfo(typeof(Restitutor.Cheats.Interface.Host), "Restitutor Cheats Interface", "1.6.2", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.Cheats.Interface.Host), "Restitutor Cheats Interface", "1.6.3", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.Cheats.Interface;
 public sealed class Host : MelonMod {
@@ -24,6 +24,10 @@ public sealed class Host : MelonMod {
     private static readonly WindowState window=new();
     private static GGraph? background;
     private static GTextField? arrow;
+    // 1.6.3: key hint line directly under the title (user request). Hidden while folded.
+    private const string HintText="[H] 접기·펼치기   [O] 모든 치트 끄기·켜기";
+    private const float Top=48,Hint=26,Body=Top+6+Hint; // title bar, hint row, first content row
+    private static GTextField? hint;
     private static GComponent? viewport,content,scrollbar;
     private static GGraph? thumb,scrollTrack,headerBox;
     private static GComponent? header,fold,close;
@@ -81,7 +85,7 @@ public sealed class Host : MelonMod {
             hooks!.Input("Cheats Interface",_ => Capture());
             Enabled=true;
         })) return;
-        log.Msg("Cheats Interface 1.6.2 loaded (in play only; save = PlayerDataManager.Data, no save hooks; Restitutor.Core "+CoreInfo.Version+", shared input gate; window meshes redrawn only when their size changes). O = all cheats off/on (process lifetime), H = fold/unfold; per-panel width and mouse-wheel scrolling.");
+        log.Msg("Cheats Interface 1.6.3 loaded (key hint line under the title; in play only; save = PlayerDataManager.Data, no save hooks; Restitutor.Core "+CoreInfo.Version+", shared input gate; window meshes redrawn only when their size changes). O = all cheats off/on (process lifetime), H = fold/unfold; per-panel width and mouse-wheel scrolling.");
     }
     // 1.6.2: the save the game plays is PlayerDataManager.Data. The game replaces that object on a new game
     // (CreateNewArchive) and on a load (InitArchive); a changed pointer = a new session. This is the only
@@ -113,7 +117,7 @@ public sealed class Host : MelonMod {
     private static void ClearView() {
         foreach(var panel in panels) panel.ClearView();
         if(root!=null && !root.isDisposed) root.Dispose();
-        root=viewport=content=scrollbar=null; background=thumb=scrollTrack=headerBox=null;header=fold=close=null;arrow=null;contentWidth=MinContent;dragging=scrolling=false;callbacks.Clear(); swallowUntil=0;
+        root=viewport=content=scrollbar=null; background=thumb=scrollTrack=headerBox=null;header=fold=close=null;arrow=hint=null;contentWidth=MinContent;dragging=scrolling=false;callbacks.Clear(); swallowUntil=0;
         drawnHeaderW=drawnTrackH=drawnThumbH=drawnBgW=drawnBgH=-1;
     }
     private static void Listen(EventListener e,Action<EventContext> action) {
@@ -136,9 +140,10 @@ public sealed class Host : MelonMod {
         var fold=Host.fold=Button(root,"CheatMinimize","",250,7,38,()=>{ReleaseFocus();window.Toggle();});
         arrow=Theme.Label(fold,"∨",0,3,38,22,true);
         close=Button(root,"CheatClose","×",295,7,38,()=>{ReleaseFocus();window.Close();root.visible=false;dragging=false;});
-        viewport=new GComponent{name="CheatViewport"};viewport.SetXY(8,54);viewport.SetSize(320,340);viewport.SetupOverflow(OverflowType.Hidden);root.AddChild(viewport);
+        hint=Theme.Label(root,HintText,15,Top+4,300,14);hint.name="CheatKeyHint";
+        viewport=new GComponent{name="CheatViewport"};viewport.SetXY(8,Body);viewport.SetSize(320,340);viewport.SetupOverflow(OverflowType.Hidden);root.AddChild(viewport);
         content=new GComponent{name="CheatContents"};viewport.AddChild(content);
-        scrollbar=new GComponent{name="CheatScrollbar"};scrollbar.SetXY(331,54);scrollbar.SetSize(9,340);root.AddChild(scrollbar);
+        scrollbar=new GComponent{name="CheatScrollbar"};scrollbar.SetXY(331,Body);scrollbar.SetSize(9,340);root.AddChild(scrollbar);
         scrollTrack=Theme.Box(scrollbar,0,0,9,340,Theme.InkBlue,true);
         thumb=Theme.Box(scrollbar,1,0,7,40,Theme.Gold);
         Listen(scrollbar.onTouchBegin,c=>{
@@ -175,7 +180,7 @@ public sealed class Host : MelonMod {
         float w=WindowWidth;
         header!.SetSize(w-98,48);
         if(drawnHeaderW!=w) { headerBox!.DrawRect(w-101,44,1,Theme.Gold,Theme.InkBlue); drawnHeaderW=w; }
-        fold!.SetXY(w-94,7);close!.SetXY(w-49,7);scrollbar!.SetXY(w-13,54);
+        fold!.SetXY(w-94,7);close!.SetXY(w-49,7);scrollbar!.SetXY(w-13,Body);hint!.SetSize(w-30,32);
     }
     private static void LayoutScroll() {
         float range=Math.Max(0,content!.height-viewport!.height);
@@ -235,9 +240,9 @@ public sealed class Host : MelonMod {
             }
             contentWidth=window.Shows?widest:MinContent;float width=WindowWidth;LayoutChrome();
             viewScale=Math.Max(.1f,Math.Min(1f,(stage.width-24)/width));
-            float viewHeight=Math.Min(Math.Max(1,y),Math.Max(48,(stage.height-24)/viewScale-60));
+            float viewHeight=Math.Min(Math.Max(1,y),Math.Max(48,(stage.height-24)/viewScale-(Body+6)));
             content!.SetSize(contentWidth,y);viewport!.SetSize(contentWidth,viewHeight);viewport.visible=window.Shows;
-            float height=window.Minimized?48:viewHeight+60;
+            float height=window.Minimized?Top:viewHeight+Body+6;hint!.visible=window.Shows;
             root.SetSize(width,height);root.touchable=!window.Closed;root.visible=!window.Closed;
             arrow!.text=window.Minimized?"∧":"∨";LayoutScroll();
             if(drawnBgW!=width||drawnBgH!=height) { background!.DrawRect(width,height,2,Theme.Gold,Theme.Navy); drawnBgW=width; drawnBgH=height; }
