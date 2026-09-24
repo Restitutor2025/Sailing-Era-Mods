@@ -3,6 +3,8 @@
 # release DLLs, logs and *.bak files stay out. Add one block per mod when it joins the repo.
 /*
 !/.gitignore
+# AI work rules (Claude, Codex) - read by every session in this folder
+!/AGENTS.md
 
 # Moved-to-editor-repo notices
 !/CityEditor/
