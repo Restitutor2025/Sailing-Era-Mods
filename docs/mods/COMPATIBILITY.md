@@ -1,3 +1,15 @@
+# Core0.7.4 — 셀레네 시험 시작 대화 (실전 미확인)
+
+신규게임 첫 항구에서 준비후 원본 StoryManager.ShowTalkPart를1회 호출. PlayerTalkDB·일시정지·대화/항구 UI 수명은 원본 재생/종료에 맡김. TextSpeed/항구UI 모드와 같은 흐름이므로 병용 실전 확인 필요. InitTalkPart/Talk/TalkTextLib4언어에 기존 HeroRows 삽입 Postfix6개 추가, 고유번호15607401/156074001만 등록. GameEvent11001/그 조건·보상·대화는 보존. [계약](city-editor-core/0.7.4.md).
+
+# Core 0.7.3 — 선택 입력/출항 관측 (실전 미확인)
+
+UICreateRoleCtrl.OnAction_A/좌우 방향 Prefix는 자체 추가 주인공 상세/취소 해제 대기 동안만 원본 차단. 기본5인 선택 입력은 유지. 같은 컨트롤러 입력을 바꾸는 모드와 순서 접점. UIHarborView.CheckQuickEnterOcean/EnterOcean/EnterOceanResult/ShowHook/SetLimit/SetUnLimit 및 UIHarborCtrl.OnAction_X/Y 전후, IsTaskBan/HasPortFacilityEvent 반환은 읽기 전용. Map의 항로 출항 콜백, 항구/출항 UI 모드와 같은 호출 흐름에 있으나 조건·반환·콜백을 바꾸지 않는다. 병용 충돌 없음으로 단정하지 않는다. MainHero156의 시작 기본 메뉴1~10은 새 게임에서 기존 초기화가 적용. [근거](city-editor-core/0.7.3.md).
+
+# Devil Fruits 0.1.6 — 2026-09-22 (빌드·실전 미확인)
+
+btnReturn onTouchBegin/End 리스너 제거(Tab Characters 언어 캐처와의 같은 대상 공유 해소). 새 공유 상태: Stat Rank 등급 글자 부모에 자식 `RestitutorDevilFruitIcon`(touchable=false) 추가, 인물 창이 열린 동안 매 프레임 커서 위치·touchTarget 읽기(Stat Rank 호버와 같은 방식). 패널은 GRoot 자식 32100, 전체 화면 차단막 없음. 훅 변화 없음. [근거](devil-fruits/0.1.6.md)
+
 # Item Rebuild 0.1.21 — 2026-09-21 (빌드·검사 통과, 실전 미확인)
 
 0.1.20 롤백: KnowledgeDB·PlayerLaneDB Deserialize 훅, UIOpenLineCtrl.ShowOpenLine 호출, KnowledgeDB 쓰기, 항로도 자동 사용(PlayerLaneDB.UnlockPrefabLane·가방 기록 삭제) 모두 제거. 남은 항로도 접점은 상점 목록 숨김·구매 선택 해제·PlayerLaneDB 해금 여부 읽기뿐. 0.1.20 사용 중 “상점 위 해금 창을 닫은 뒤 상점 화면·입력 미복구” 보고가 있었다(원인 미확정) — 상점 Exchange 중 다른 UICtrl을 여는 모드는 같은 문제를 일으킬 수 있다 [추론]. [계약](item-rebuild/PATCHES.md) · [근거](item-rebuild/0.1.21.md)
@@ -448,3 +460,38 @@ Contribution 0.2.2 / Map 0.2.1 설치 해시 확인. 훅 수는 각각 12/40으�
 
 
 
+
+
+## CityEditor Core 0.6.0 — 셀레네 선택·시작 (2026-09-23, 준비본)
+신규 Postfix7개: 선택 장면/뷰 종료3, 상회 사전1, 생성/항구 관측3. [계약](city-editor-core/PATCHES.md). NavtoCity0.2.0과 HarbourScene.OnEnter가 겹치지만 이번 처리기는 PlayerData 읽기·로그뿐이다. 원본 EnterHarbourAniEnd 반환에서 상태를 읽는다. InstantEntrance0.1.1의 직접 대상은 이 함수가 아니다. 자체 패널이 열린 동안 해당 UICreateRoleCtrl.UIAgent와 UIContent.touchable, GRoot 포커스 및 장면 transform을 다룬다. 취소 복원/숨김 정리 구현, 원본5명 enum/배열 확장 없음. 입력을 다루는 다른 모드와 실행 순서·병용 실전 미확인. 기존 TableApply/Rows/Sea 코드 변경 없음. [근거](../../analysis/hero-stage2/REPORT.md).
+
+
+## CityEditor Core 0.7.0 — 시작 진단 준비본
+진단 Postfix4개는 항구/시설/부두 조회 및 시설 초기화 반환 관측이며 매프레임 폴링/원본 차단/결과 교체 없음. 자체 관측은180초/2048조회로 제한하고 설치 실패를 개별 기록한다. FunctionData/OpenFacilityList는 생성·입항 시 읽기만 한다. 기존 EnterHarbourAniEnd Postfix에서 시작 일반 이벤트를 지정하면 원본 GameEventManager를 호출하여 게임 상태를 바꿀 수 있다. 이번 비교값은 이벤트0으로 호출하지 않는다. 도시 모드의 최종 Port/PortFacility/Wharf 자료와 초기화 순서가 관측 대상이다. NavtoCity와 항구 진입 접점 및 게임 이벤트 실행 중 다른 모드와 병용 실전 미확인. [패치 계약](city-editor-core/PATCHES.md) · [근거](../../analysis/hero-stage2/DIAGNOSTIC-0.7.0.md).
+
+
+## CityEditor Core0.7.1 준비본
+
+UICreateRoleView.Refresh/ShowHook 추가Postfix, UIContent.visible 공유 및 복원. HarbourScene.OnEnter 신규Prefix는 신규 주인공 시작 설정의 FunctionOpenDB.SetFunctionOpen을 호출하므로 NavtoCity와 같은 함수 접점이며 기능 알림 구독자에 영향 가능. 기존 저장에는 실행하지 않음. 새 도시 Wharf 행 추가는 전체 항구 초기화 자료를 바꿈. 빌드/오프라인 검사는 실전 병용 성공이 아님. [근거](city-editor-core/0.7.1.md).
+
+
+## CityEditor Core 0.7.2 준비본
+
+취소 경로 OnAction_B/ReturnToMenu에 소유 컨트롤러 한정 Prefix 추가. 기존 공유 UIAgent/포커스/Hide 수명주기 및 선택 PNG 소유 계약 유지. HarbourScene.OnEnter는 NavtoCity와 같은 함수이며 새 기함 지급으로 PlayerShipHold/선장/dirty/알림/자동 저장 접점 추가. 다른 주인공/저장 불러오기 제외. 실행 순서·병용은 실전 미검증. [계약](city-editor-core/PATCHES.md).
+
+2026-09-23 사용자 정정: 0.7.2 시작 함선은 아라비아 갤리220에서 일반 슬루프110으로 변경. 5000 및 다른 설정, 함수·입력·수명주기 계약은 유지. 원본 Ship110: 슬루프, Special=false, NeedSailorNumber=18. DLL 재빌드 불필요한 배포 설정 변경.
+
+
+2026-09-24: 캐릭터 에디터 통합 이벤트 작업 화면0.1.0. 에디터 선택/창/문서 공유만 변경하며 게임 Core0.7.4는 무변경. docs/mods/character-editor/CURRENT.md 참조.
+
+
+2026-09-24 에디터0.1.1: startTalk/startEvent 카드와 설치 추가 대화 읽기 연결. 원본 표 별도 보완본, 파일 쓰기 없음. 문서 설정(0 포함)이 설치 설정보다 우선. docs/mods/character-editor/0.1.1.md 참조.
+
+## Core 0.7.5 이름표 표시 그룹
+새 주인공 이름표가 원본 groupBtnCharacter를 공유한다. 그룹의 visible/alpha를 쓰지 않고 멤버로 연결한다. 그룹 배치·위치를 변경하는 모드와 경계 계산 접점이 있음. 후크 및 입력 계약 변화 없음, 병용 실전 미확인. [상세](city-editor-core/0.7.5.md).
+
+## Core 0.7.6 상세 스타일
+원본 UIcompNameChinese/English와 입력 아이콘 리소스를 자체 모달에 재사용. 원본 모델 읽기만 하며 원본 UI·키 바인딩·공유 텍스처 소유권 무변경. 표시 겹침·병용은 게임 확인 전. [근거](city-editor-core/0.7.6.md).
+
+## Core 0.7.7 이름 PNG
+자체 모달 이름 이미지만 기존 소유 텍스처 목록에 추가. 원본 리소스 파일·후크·입력 무변경. 병용 실전 확인 전. [근거](city-editor-core/0.7.7.md).
