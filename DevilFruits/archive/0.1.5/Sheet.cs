@@ -6,16 +6,20 @@ using UnityEngine;
 
 namespace Restitutor.DevilFruits;
 
-// Tab character sheet. 0.1.3 (user 2026-09-22): the Stat Rank grade letter keeps its own
-// behaviour (hover = rank tip; clicks are no longer taken). A small fruit icon is placed right of
-// the letter only while that fruit can be used (owned >= 1 and grade below S); hovering the icon
-// opens the fruit panel (Dialog.cs). The letters belong to Restitutor_Additional_Stat_Rank
-// (GTextField "RestitutorStatRank" beside UICom_Prop.TexPropTitle); icons are added to the same
-// parent. UISheetCharacter.btnReturn covers this column (Stat Rank 0.1.1 / Tab Characters 0.6.7
-// traces), so hover is detected from the cursor position, as Stat Rank does.
+// Tab character sheet: a left click on a Stat Rank grade letter (S~D) opens the use dialog for
+// that ability's fruit. The letters belong to Restitutor_Additional_Stat_Rank (GTextField named
+// "RestitutorStatRank", placed beside UICom_Prop.TexPropTitle). UISheetCharacter.btnReturn
+// covers the letters and is the hit target (Stat Rank 0.1.1 trace, Tab Characters 0.6.7 trace),
+// so the press is taken on btnReturn itself, exactly like Tab Characters' language catcher:
+// only a press AND release on the same letter cancel the native btnReturn click. Other presses
+// pass through unchanged. 0.1.1: every navigator letter opens the panel, also with 0 fruits or at
+// S, so the panel can say why the fruit cannot be used (0.1.0 passed those clicks through silently).
 public sealed partial class EntryPoint {
     private const string StatRankLabel="RestitutorStatRank";
     private static UICharacterView? sheetView;
+    private static GObject? catcher;
+    private static EventCallback1? catchBegin,catchEnd;
+    private static int armedStat=-1;
     private static bool warnedNoLetters;
 
     private static UICom_Prop?[] Props(UICharacterView v)=>new UICom_Prop?[]{v.Physical,v.Perceive,v.Craft,v.Knowledge,v.Charm};
@@ -56,54 +60,47 @@ public sealed partial class EntryPoint {
         if(!enabled) return;
         try {
             Resync(UICharacterCtrl.Data?.PlayerRole,"sheet refresh");
-            if(sheetView?.Pointer!=__instance.Pointer){CloseDialog();DisposeIcons();}
-            sheetView=__instance;
-            iconRefreshFrame=-1;                 // icons follow on the next OnUpdate (after Stat Rank placed the letters)
+            Bind(__instance);
         } catch(Exception ex) { Fail("sheet refresh",ex); }
     }
     // UICharacterView.HideHook postfix: the character window closed.
     private static void AfterHide() {
-        try { CloseDialog(); DisposeIcons(); sheetView=null; } catch(Exception ex) { Fail("hide",ex); }
+        try { CloseDialog(); Unbind(); } catch(Exception ex) { Fail("hide",ex); }
     }
-    private static void Unbind() { CloseDialog(); DisposeIcons(); sheetView=null; }
 
-    // ---- fruit icons beside the letters
-    private const string IconName="RestitutorDevilFruitIcon";
-    private static readonly GLoader?[] icons=new GLoader?[Rules.Count];
-    private static int iconRefreshFrame=-1;
-
-    private static bool CanUse(UICharacterView v,int stat) {
-        var hero=SelectedRole(v,out _)?.GetHeroTemplate();
-        return hero!=null && !Rules.IsTop(GetGrade(hero,stat)) && Owned(stat)>0;
+    private static void Bind(UICharacterView view) {
+        sheetView=view;
+        // 0.1.1: the first RefreshTipsRoleInfo can run before the sheet content exists; native
+        // get_SheetCharacter then throws NullReferenceException (user log 22:22:48). Bind later.
+        var content=view._UIContent_k__BackingField;
+        if(content==null || content.isDisposed) return;
+        var target=view.SheetCharacter?.btnReturn;
+        if(target==null || target.isDisposed || catcher?.Pointer==target.Pointer) return;
+        Unbind(); sheetView=view;
+        catchBegin=(EventCallback1)(Action<EventContext>)(e=>Guard("press",()=>{
+            armedStat=-1;
+            var v=sheetView;
+            if(v==null || e.inputEvent.button!=0 || dialog!=null) return;
+            int s=StatAt(v,e.inputEvent.x,e.inputEvent.y);
+            if(s<0 || SelectedRole(v,out _)==null) return;                   // not a letter / seaman: native behaviour
+            armedStat=s; e.CaptureTouch();
+        }));
+        catchEnd=(EventCallback1)(Action<EventContext>)(e=>Guard("release",()=>{
+            int s=armedStat; armedStat=-1;
+            var v=sheetView;
+            if(s<0 || v==null || e.inputEvent.button!=0) return;
+            e.StopPropagation(); Stage.inst.CancelClick(e.inputEvent.touchId);
+            if(StatAt(v,e.inputEvent.x,e.inputEvent.y)!=s) return;           // released elsewhere
+            pendingOpen=s;                                                    // open next frame, outside FairyGUI dispatch
+        }));
+        target.onTouchBegin.Add(catchBegin);
+        target.onTouchEnd.Add(catchEnd);
+        catcher=target;
     }
-    private static void DisposeIcons() {
-        for(int s=0;s<icons.Length;s++){var l=icons[s];icons[s]=null;try{if(l!=null && !l.isDisposed)l.Dispose();}catch{}}
-    }
-    // Called from OnUpdate every few frames while a sheet is registered.
-    private static void RefreshIcons(UICharacterView v) {
-        var content=v._UIContent_k__BackingField;
-        if(content==null || content.isDisposed || !content.onStage){DisposeIcons();return;}
-        var props=Props(v);
-        for(int s=0;s<Rules.Count;s++) {
-            var letter=Letter(props[s]);
-            var icon=icons[s];
-            bool show=letter!=null && letter.visible && letter.onStage && CanUse(v,s);
-            if(!show){ if(icon!=null && !icon.isDisposed) icon.visible=false; continue; }
-            var parent=letter!.parent;
-            if(icon==null || icon.isDisposed || icon.parent?.Pointer!=parent?.Pointer) {
-                if(icon!=null && !icon.isDisposed) icon.Dispose();
-                var item=TemplateManager.GetItem(Rules.ItemTid(s));
-                icon=new Il2CppCore.NewUISystem.MyGLoader{name=IconName,touchable=false};
-                icon.fill=FillType.ScaleFree; icon.align=AlignType.Center; icon.verticalAlign=VertAlignType.Middle;
-                icon.url=item?.icon ?? Rules.Icon;
-                parent!.AddChild(icon);
-                icons[s]=icon;
-            }
-            float size=letter.height*1.15f;
-            icon.SetSize(size,size);
-            icon.SetXY(letter.x+letter.width+letter.height*.25f,letter.y+(letter.height-size)/2);
-            icon.visible=true;
-        }
+    private static void Unbind() {
+        var t=catcher; catcher=null; armedStat=-1; sheetView=null;
+        if(t!=null && !t.isDisposed){ if(catchBegin!=null)t.onTouchBegin.Remove(catchBegin); if(catchEnd!=null)t.onTouchEnd.Remove(catchEnd); }
+        catchBegin=null; catchEnd=null;
     }
 
     internal static string GradeLetter(int grade) {

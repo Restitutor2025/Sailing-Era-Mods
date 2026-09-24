@@ -24,7 +24,7 @@ internal static class Rules {
     internal static string ItemName(int stat)=>StatNames[stat]+" 악마의 열매";
     internal static string ItemDesc(int stat)=>"먹은 항해사의 "+StatNames[stat]+" 성장 등급이 한 단계 오른다.";
     internal const string TypeName="악마의 열매";
-    internal const string TypeHint="*인물 화면에서 능력 등급 옆 열매 아이콘에 마우스를 올려 사용";
+    internal const string TypeHint="*인물 화면에서 해당 능력의 등급 글자를 클릭해 사용";
 
     // All texts this mod adds to TextLib, key -> Korean text.
     internal static IEnumerable<(string key,string text)> Texts() {
