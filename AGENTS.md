@@ -8,7 +8,8 @@
 - 변경 후 CURRENT, 패치 목록, 해당 버전 문서와 근거를 함께 갱신한다. 과거 기록은 보존한다.
 - 버그 분석·성능 진단 작업은 docs/handoff/DIAGNOSTIC_PRINCIPLES.md의 원칙과 절차를 따른다. 그럴듯한 원인을 바로 수정하지 말고 다른 후보와 구별할 근거를 먼저 확인한다.
 
-- 배포·설치·업로드마다 GitHub에 소스 커밋/PR, 버전, SHA256, 배포 원본·설치 대상, 검증 상태를 기록한다. 에디터 배포 원본과 게임 설치본을 함께 확인해 다운그레이드를 막는다. 공개 업로드 승인이 보류된 경우 게시 완료로 보고하지 않는다.
+- 배포·설치·업로드마다 GitHub에 소스 커밋/PR, 버전, SHA256, 배포 원본·설치 대상, 검증 상태를 기록한다. 에디터 배포 원본과 게임 설치본을 함께 확인해 다운그레이드를 막는다. 공개 업로드 승인이 보류된 경우 게시 완료로 보고하지 않는다. 절차: docs/mods/DEPLOYMENT_POLICY.md. CityEditor Core(에디터 저장소 core/)의 현재 설치 버전·해시와 자동 차단은 에디터 저장소 docs/CORE_DEPLOYMENT_STATUS.md · docs/DEPLOYMENT_POLICY.md 를 본다.
+- 일회성 설치·커밋·push 스크립트(.bat/.ps1)는 저장소 최상위에 두지 않고 tools/one-shots/ 에 만든다(최상위는 .gitignore 로 막힘). 생성기 tools/oneshot.py 는 tools/one-shots/ 에서 실행한다.
 
 - 에디터 저장소(`E:\Program\Sailing_Era_Editor`, GitHub Sailing-Era-Editor)의 코드 — City/Character/Ship Editor 와 CityEditor Core(그 저장소 `core/`) — 는 이 저장소에서 고치지 않는다. `output\` 등에 사본을 만들어 작업하지 말고, 그 저장소 `AGENTS.md`(작업 폴더 `scripts\new-worktree.ps1`)를 따른다. 이 저장소의 `CityEditorCore\`·`CityEditor\` 는 이동 안내만 남은 폴더다. (2026-09-24 구조 리뷰: 코어 0.6.0~0.7.7 이 `output\hero-*` 사본에서 작업돼 버전이 갈라졌음)
 - 이 저장소 `Core\` = Restitutor.Core(모드 공용 라이브러리). 에디터 저장소 `core/`(Restitutor_CityEditor_Core, 에디터 적용 모드)와 다른 것이다.

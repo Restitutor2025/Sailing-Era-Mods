@@ -237,9 +237,6 @@
 !/Map/candidates/tab-only/tests/*.csproj
 !/Map/candidates/tab-only/tests/*.ps1
 
-# Install script
-!/install-2026-09-22-perf.ps1
-
 # Restitutor.Core (shared library, installed to UserLibs)
 !/Core/
 /Core/*
@@ -252,19 +249,10 @@
 /Core/tests/*
 !/Core/tests/*.cs
 !/Core/tests/*.csproj
-!/install-core-0.1.0.ps1
-!/install-core-0.1.0.bat
-!/push-core-0.1.0.bat
-!/core-batch-*.ps1
-!/core-batch-*.bat
 !/tools/
 /tools/*
 !/tools/*.py
 !/tools/*.json
-!/fix-*.ps1
-!/fix-*.bat
-!/release-*.ps1
-!/release-*.bat
 !/release/
 /release/*
 !/release/*.md
@@ -283,3 +271,6 @@
 /RebalanceLandExplore/tests/*
 !/RebalanceLandExplore/tests/*.cs
 !/RebalanceLandExplore/tests/*.csproj
+
+# One-shot scripts (install/commit/push, kept for the record) — only here, never at the repo root (2026-09-25)
+!/tools/one-shots/
