@@ -10,7 +10,7 @@ using Il2CppFairyGUI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[assembly: MelonInfo(typeof(Restitutor.Cheats.Interface.Host), "Restitutor Cheats Interface", "1.6.1", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.Cheats.Interface.Host), "Restitutor Cheats Interface", "1.6.2", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.Cheats.Interface;
 public sealed class Host : MelonMod {
@@ -73,19 +73,29 @@ public sealed class Host : MelonMod {
             using var file=File.OpenRead(path);
             if(Convert.ToHexString(SHA256.Create().ComputeHash(file))!="50D53D17829E3E77B9786EA42D998D1AD258F0653846524069F22E5E442EFFCA")
                 throw new InvalidOperationException("Unsupported GameAssembly baseline");
-            hooks!.Hook(typeof(PlayerData),"Deserialize",prefix:nameof(ResetSession),postfix:nameof(Loaded),declaredOnly:false);
-            hooks.Hook(typeof(WorldPortHoldDB),"InitHook",prefix:nameof(ResetSession),declaredOnly:false);
-            hooks.Hook(typeof(PlayerDataManager),"ProcessArchiveInitialize",postfix:nameof(Ready),declaredOnly:false);
+            // 1.6.2: no save hooks. The current save is read from PlayerDataManager.Data (see SyncSession):
+            // new games never run PlayerData.Deserialize, ProcessArchiveInitialize is inlined into its callers
+            // (never called), and WorldPortHoldDB.InitHook / other Deserialize calls (handbook reads) cleared or
+            // replaced Player, so the window stayed hidden until a later reload.
             // 1.6.0: shared Core input gate instead of an own prefix on InputSystemManager.OnEventCaptureInput.
-            hooks.Input("Cheats Interface",_ => Capture());
+            hooks!.Input("Cheats Interface",_ => Capture());
             Enabled=true;
         })) return;
-        log.Msg("Cheats Interface 1.6.1 loaded (in play only; Restitutor.Core "+CoreInfo.Version+", shared input gate; window meshes redrawn only when their size changes). O = all cheats off/on (process lifetime), H = fold/unfold; per-panel width and mouse-wheel scrolling.");
+        log.Msg("Cheats Interface 1.6.2 loaded (in play only; save = PlayerDataManager.Data, no save hooks; Restitutor.Core "+CoreInfo.Version+", shared input gate; window meshes redrawn only when their size changes). O = all cheats off/on (process lifetime), H = fold/unfold; per-panel width and mouse-wheel scrolling.");
     }
-    private static void Loaded(PlayerData __instance)=>Player=__instance;
-    private static void Ready(PlayerDataManager __instance)=>Player=__instance.Data;
+    // 1.6.2: the save the game plays is PlayerDataManager.Data. The game replaces that object on a new game
+    // (CreateNewArchive) and on a load (InitArchive); a changed pointer = a new session. This is the only
+    // per-frame read of Data (1.6.1 read it twice: InGame and Current); PlayLocation uses Player instead.
+    private static IntPtr session;
+    private static void SyncSession() {
+        var data=PlayerDataManager.Instance?.Data;
+        var id=data?.Pointer ?? IntPtr.Zero;
+        if(id==session) return;
+        ResetSession(); session=id; Player=data;
+        log?.Msg(id==IntPtr.Zero ? "Session cleared (no save data)." : "Session: current save data changed; cheat panels reset.");
+    }
     private static void ResetSession() {
-        Player=null; window.ResetLocation();
+        Player=null; session=IntPtr.Zero; window.ResetLocation();
         ResetPanels();
         ClearView(); errors.Clear();
     }
@@ -180,6 +190,7 @@ public sealed class Host : MelonMod {
     public override void OnUpdate() {
         if(!Enabled) return;
         try {
+            SyncSession();
             bool hDown=Keyboard.current?.hKey.isPressed==true;
             // 1.6.1: the window exists only in play (city, sea or land scene of the loaded save); never on the
             // title screen, while loading, or after returning to the title with a stale save reference.

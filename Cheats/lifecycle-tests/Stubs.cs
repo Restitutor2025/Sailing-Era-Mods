@@ -20,12 +20,12 @@ namespace MelonLoader {
     }
 }
 namespace Il2CppClient.PlayerStore {
-    public class PlayerData { public IntPtr Pointer=(IntPtr)1; public Port PlayerPort=new(); public void Deserialize(){} }
+    public class PlayerData { private static int next; public IntPtr Pointer=(IntPtr)(++next); public Port PlayerPort=new(); public void Deserialize(){} }
     public class Port { public bool IsStayInPort=true; public int StayInPortId=1; }
     public class WorldPortHoldDB { public void InitHook(){} }
 }
 namespace Il2CppClient.Manager {
-    public class PlayerDataManager { public static PlayerDataManager Instance=new(); public Il2CppClient.PlayerStore.PlayerData Data=new(); public void ProcessArchiveInitialize(){} }
+    public class PlayerDataManager { public static PlayerDataManager Instance=new(); private Il2CppClient.PlayerStore.PlayerData data=new(); public int Reads; public Il2CppClient.PlayerStore.PlayerData Data { get { Reads++; return data; } set => data=value; } public void ProcessArchiveInitialize(){} }
 }
 namespace Il2CppCore.InputSystem { public class InputSystemManager { public void OnEventCaptureInput(UnityEngine.InputSystem.InputAction.CallbackContext ctx){} } }
 namespace Il2CppFairyGUI {
