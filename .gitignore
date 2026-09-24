@@ -281,3 +281,6 @@
 /RebalanceLandExplore/tests/*
 !/RebalanceLandExplore/tests/*.cs
 !/RebalanceLandExplore/tests/*.csproj
+
+# Shared instructions for all agents
+!/AGENTS.md
