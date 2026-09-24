@@ -10,7 +10,7 @@ using Il2CppFairyGUI;
 using Il2CppGyyx.Template;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(Restitutor.StatRank.EntryPoint), "Restitutor Additional Stat Rank", "0.2.2", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.StatRank.EntryPoint), "Restitutor Additional Stat Rank", "0.2.1", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.StatRank;
 
@@ -29,7 +29,7 @@ public sealed class EntryPoint : MelonMod {
     private static readonly Dictionary<IntPtr,(string[] row,bool fruit)> rows=new();
     // 0.2.1 (user): tip footer when Devil Fruits is loaded, the player holds that ability's fruit and the grade is
     // not S yet. Fruit item tid = 990001 + ability index (Devil Fruits Rules.ItemTid, same row order as here).
-    internal const string FruitHint="옆의 열매 아이콘에 마우스를 올려 먹을 수 있습니다.";   // 0.2.2: Devil Fruits 0.1.6 moved the use from a click on this letter to the icon
+    internal const string FruitHint="좌클릭으로 악마의 열매를 먹을 수 있습니다.";
     private const int FirstFruitTid=990001;
     private static bool? fruitsLoaded;
     private static bool FruitsLoaded=>fruitsLoaded??=MelonBase.RegisteredMelons.Any(m=>m.Info.Name=="Restitutor Devil Fruits");
@@ -71,7 +71,7 @@ public sealed class EntryPoint : MelonMod {
             hooks.Hook(typeof(UICharacterView),"HideHook",postfix:nameof(AfterHide),args:Type.EmptyTypes);
         })) return;
         enabled=true;
-        log.Msg("Stat Rank 0.2.2 loaded (Restitutor.Core "+CoreInfo.Version+"); 2 postfixes (UICharacterView.RefreshTipsRoleInfo, HideHook); read-only. Hover by cursor position while the sheet is open; tip alpha 0.8.");
+        log.Msg("Stat Rank 0.2.1 loaded (Restitutor.Core "+CoreInfo.Version+"); 2 postfixes (UICharacterView.RefreshTipsRoleInfo, HideHook); read-only. Hover by cursor position while the sheet is open; tip alpha 0.8.");
     }
     private static void Fail(Exception ex) { if(lastError!=ex.Message){lastError=ex.Message;log.Error(ex.ToString());} }
 

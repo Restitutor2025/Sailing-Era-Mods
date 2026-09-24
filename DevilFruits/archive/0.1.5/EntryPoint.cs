@@ -9,7 +9,7 @@ using Il2CppClient.UILogic.UICharacter;
 using Il2CppClient.UILogic.UIHeroLevelUp;
 using Il2CppGyyx.Template;
 
-[assembly: MelonInfo(typeof(Restitutor.DevilFruits.EntryPoint), "Restitutor Devil Fruits", "0.1.6", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.DevilFruits.EntryPoint), "Restitutor Devil Fruits", "0.1.5", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.DevilFruits;
 
@@ -17,7 +17,7 @@ namespace Restitutor.DevilFruits;
 // Item rows are added at runtime; the effect is recorded in the save (ListSkillBooks) and
 // re-applied to the shared Hero template on load. See docs/mods/devil-fruits/.
 public sealed partial class EntryPoint : MelonMod {
-    internal const string Version="0.1.6";
+    internal const string Version="0.1.5";
     private const string Baseline="50D53D17829E3E77B9786EA42D998D1AD258F0653846524069F22E5E442EFFCA";
     private static MelonLogger.Instance log=null!;
     private static bool enabled;
@@ -55,7 +55,7 @@ public sealed partial class EntryPoint : MelonMod {
             enabled=true;
             EnsureTemplates("init");   // tables may already be loaded
         })) { enabled=false; return; }
-        log.Msg($"Devil Fruits {Version} loaded (Restitutor.Core {CoreInfo.Version}); {hooks} hooks. Items {Rules.ItemTid(0)}..{Rules.ItemTid(Rules.Count-1)}, type {Rules.ItemTypeTid}; use = hover the fruit icon right of a Stat Rank grade letter (shown only when usable); panel alpha 0.8; Stat Rank 0.2.2 tip text matches.");
+        log.Msg($"Devil Fruits {Version} loaded (Restitutor.Core {CoreInfo.Version}); {hooks} hooks. Items {Rules.ItemTid(0)}..{Rules.ItemTid(Rules.Count-1)}, type {Rules.ItemTypeTid}; use = click a Stat Rank grade letter on the Tab character sheet (fruit panel under the Stat Rank tip, alpha 0.8).");
     }
 
     // Declared-only lookup by name; every target name is unique on its type (checked against the

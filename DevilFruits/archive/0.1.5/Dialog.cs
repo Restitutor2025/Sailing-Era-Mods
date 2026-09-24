@@ -5,12 +5,12 @@ using UnityEngine;
 
 namespace Restitutor.DevilFruits;
 
-// Fruit panel (0.1.1: item icon, owned count, state, [사용]; alpha 0.8). 0.1.3 (user 2026-09-22):
-// opened by HOVERING the fruit icon beside the grade letter, kept open while the cursor is over
-// the icon or the panel, closed when it leaves both. The panel touches the icon's left edge (no
-// gap) so the cursor can move onto [사용]. Own GComponent under GRoot, sortingOrder 32100 (above
-// Tab Characters 32000 and Stat Rank's tip 31950, below the raised native UITips 32760). Actions
-// run on the next OnUpdate, never inside a FairyGUI event dispatch.
+// 0.1.1 fruit panel (user 2026-09-21: show the fruit like the skill-book panel, with the owned
+// count, placed under Stat Rank's grade tip; explain why it cannot be used). Own GComponent under
+// GRoot, sortingOrder 32100 (above Tab Characters' panel container 32000 and Stat Rank's tip
+// 31950, below the temporarily raised native UITips 32760). A transparent full-screen catcher
+// takes clicks outside the panel and closes it. Panel alpha 0.8 (user). Actions run on the next
+// OnUpdate, never inside a FairyGUI event dispatch.
 public sealed partial class EntryPoint {
     private const float PanelAlpha=.8f;
     private static GComponent? dialog;
@@ -21,16 +21,14 @@ public sealed partial class EntryPoint {
 
     private enum FruitState { Usable, NoFruit, Top }
 
-    private static GComponent? panelBox;
-
     private static void OpenDialog(int stat) {
         CloseDialog();
         var v=sheetView;
         if(v==null) return;
         var role=SelectedRole(v,out _);
         var hero=role?.GetHeroTemplate();
-        var anchor=icons[stat];
-        if(role==null || hero==null || anchor==null || anchor.isDisposed || !anchor.onStage || !anchor.visible) return;
+        var letter=Letter(Props(v)[stat]);
+        if(role==null || hero==null || letter==null || letter.isDisposed || !letter.onStage) return;
         Resync(UICharacterCtrl.Data?.PlayerRole,"panel");
         int grade=GetGrade(hero,stat), owned=Owned(stat);
         var state=Rules.IsTop(grade) ? FruitState.Top : owned<=0 ? FruitState.NoFruit : FruitState.Usable;
@@ -38,9 +36,15 @@ public sealed partial class EntryPoint {
 
         var root=GRoot.inst;
         var d=new GComponent{name="RestitutorDevilFruitPanel",sortingOrder=32100};
-        d.SetSize(0,0);                 // container only; nothing outside the panel takes input
+        d.SetSize(root.width,root.height);
         root.AddChild(d);
         dialog=d;
+
+        // Outside catcher: any press outside the panel closes it (left or right button).
+        var catcherG=new GGraph();
+        catcherG.DrawRect(root.width,root.height,0,Color.clear,Color.clear);
+        d.AddChild(catcherG);
+        Listen(catcherG.onTouchBegin,e=>{e.StopPropagation();Stage.inst.CancelClick(e.inputEvent.touchId);pendingClose=true;});
 
         var format=v.SheetCharacter?.texSkillDesc?.textFormat;
         float fs=format!=null && format.size>0 ? format.size : 24;
@@ -48,8 +52,7 @@ public sealed partial class EntryPoint {
 
         var panel=new GComponent{alpha=PanelAlpha};
         d.AddChild(panel);
-        panelBox=panel;
-        Listen(panel.onTouchBegin,e=>e.StopPropagation());
+        Listen(panel.onTouchBegin,e=>e.StopPropagation());   // presses inside never close
 
         var title=Text(panel,$"{Rules.StatNames[stat]} 성장 등급 {GradeLetter(grade)}",fs,format,new Color(1f,.86f,.55f,1));
         var name=Text(panel,Rules.ItemName(stat),fs,format,Color.white);
@@ -89,11 +92,23 @@ public sealed partial class EntryPoint {
         if(state==FruitState.Usable)
             Button(panel,"사용",x,top+name.height+gap+statusText.height+gap,btnW,btnH,fs,()=>pendingEat=dialogStat);
 
-        // Left of the fruit icon, right edge touching the icon, vertically centred on it; if the
-        // left side has no room, right of it. Clamped to the screen.
-        var a=root.GlobalToLocal(anchor.LocalToGlobal(new Rect(0,0,anchor.width,anchor.height)));
-        float px=a.x-w; if(px<0) px=a.x+a.width;
-        float py=a.y+a.height/2-h/2;
+        // 0.1.1 (user, screenshot 2026-09-21): the letters sit in the right-hand attribute column
+        // and Stat Rank's hover tip opens left of the letter, so a panel beside the letter covered
+        // the tip. Placement: directly BELOW the Stat Rank tip, right edges aligned (both end at
+        // the letter). If there is no room below, directly above the tip. Without a tip on screen,
+        // the same anchor Stat Rank uses: left of the letter, vertically centred on it.
+        var a=root.GlobalToLocal(letter.LocalToGlobal(new Rect(0,0,letter.width,letter.height)));
+        float offset=fs*.6f, stack=fs*.3f;
+        var tip=RankTip();
+        float px,py;
+        if(tip!=null) {
+            px=tip.x+tip.width-w;
+            py=tip.y+tip.height+stack;
+            if(py+h>root.height) py=tip.y-stack-h;
+        } else {
+            px=a.x-w-offset; if(px<0) px=a.x+a.width+offset;
+            py=a.y+a.height/2-h/2;
+        }
         panel.SetXY(Math.Clamp(px,0,Math.Max(0,root.width-w)),Math.Clamp(py,0,Math.Max(0,root.height-h)));
     }
 
@@ -144,41 +159,18 @@ public sealed partial class EntryPoint {
         foreach(var (l,c) in dialogListeners) { try { l.Remove(c); } catch { } }
         dialogListeners.Clear();
         if(dialog!=null && !dialog.isDisposed) dialog.Dispose();
-        dialog=null; panelBox=null; dialogStat=-1; pendingEat=-1; pendingClose=false;
-    }
-
-    private static bool InsideRoot(GObject? o,float x,float y,float margin) {
-        if(o==null || o.isDisposed || !o.visible || !o.onStage) return false;
-        var r=GRoot.inst.GlobalToLocal(o.LocalToGlobal(new Rect(0,0,o.width,o.height)));
-        var p=GRoot.inst.GlobalToLocal(new Vector2(x,y));
-        return p.x>=r.x-margin && p.y>=r.y-margin && p.x<=r.x+r.width+margin && p.y<=r.y+r.height+margin;
+        dialog=null; dialogStat=-1; pendingEat=-1; pendingClose=false;
     }
 
     // Called from OnUpdate.
     private static void TickDialog() {
-        var v=sheetView;
-        if(v!=null && (iconRefreshFrame<0 || Time.frameCount-iconRefreshFrame>=10)) {
-            iconRefreshFrame=Time.frameCount;
-            Guard("icons",()=>RefreshIcons(v));
-        }
-        if(pendingEat>=0){int s=pendingEat;pendingEat=-1;Guard("use",()=>{CloseDialog();Eat(s);Guard("icons",()=>RefreshIcons(sheetView!));if(sheetView!=null)OpenDialog(s);});}
+        if(pendingOpen>=0){int s=pendingOpen;pendingOpen=-1;Guard("open",()=>OpenDialog(s));}
+        if(pendingEat>=0){int s=pendingEat;pendingEat=-1;Guard("use",()=>{CloseDialog();Eat(s);if(sheetView!=null)OpenDialog(s);});}
         if(pendingClose){pendingClose=false;CloseDialog();}
-        if(v==null){ if(dialog!=null) CloseDialog(); return; }
-        var content=v._UIContent_k__BackingField;
-        if(content==null || content.isDisposed || !content.onStage){ if(dialog!=null) CloseDialog(); return; }
-        Guard("hover",()=>{
-            float x=Stage.inst.touchPosition.x, y=Stage.inst.touchPosition.y;
-            if(dialog!=null) {
-                // Keep while over the panel or its icon (small margin), else close.
-                if(InsideRoot(panelBox,x,y,4) || (dialogStat>=0 && InsideRoot(icons[dialogStat],x,y,4))) return;
-                CloseDialog();
-            }
-            // Open only when the sheet itself is the hit target (btnReturn or nothing of ours),
-            // so a panel opened over the sheet (e.g. Tab Characters) blocks it, as in Stat Rank.
-            var target=Stage.inst.touchTarget?.gOwner;
-            var btn=v.SheetCharacter?.btnReturn;
-            if(target==null || btn==null || target.Pointer!=btn.Pointer) return;
-            for(int s=0;s<Rules.Count;s++) if(InsideRoot(icons[s],x,y,0)){ OpenDialog(s); return; }
-        });
+        // Safety: the panel never outlives the character sheet it belongs to.
+        if(dialog!=null) {
+            var v=sheetView;
+            if(v==null || v._UIContent_k__BackingField==null || v._UIContent_k__BackingField.isDisposed || !v._UIContent_k__BackingField.onStage) CloseDialog();
+        }
     }
 }
