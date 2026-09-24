@@ -15,15 +15,15 @@ var host=new Host(); var speed=new TestPanel("speed",20,112); var contribution=n
 Host.Register(speed); Host.Register(contribution);
 host.OnUpdate(); Check(speed.Container==null); Check(contribution.Container==null);
 Load(); host.OnUpdate();
-Check(GRoot.inst.Children.Single().height==48);
+Check(GRoot.inst.Children.Single().height==68);
 Check(!speed.Container!.visible && !contribution.Container!.visible);
 ((WindowState)typeof(Host).GetField("window",BindingFlags.NonPublic|BindingFlags.Static)!.GetValue(null)!).Toggle();
 host.OnUpdate();
 Check(contribution.Container!.y==0); Check(speed.Container!.y==224);
 Check(speed.Container.parent!.height==342); Check(GRoot.inst.Children.Count==1);
-// 1.6.4: key hint in small type inside the title box (title box 64 unfolded, 48 folded); hidden while folded.
-var keyHint=(GTextField)Find(GRoot.inst,"CheatKeyHint");Check(keyHint.text=="[H] 접기·펼치기   [O] 모든 치트 끄기·켜기");Check(keyHint.visible);Check(keyHint.parent==Find(GRoot.inst,"CheatTitleDrag"));Check(keyHint.textFormat.size==10);Check(keyHint.y>=36&&keyHint.y+14<=63);Check(Find(GRoot.inst,"CheatTitleDrag").height==64);
-Check(Find(GRoot.inst,"CheatViewport").y>=64);Check(GRoot.inst.Children.Single().height==Find(GRoot.inst,"CheatViewport").height+76);
+// 1.6.5: key hint (font 15) inside the full-width title box (68), below the buttons; also shown when folded.
+var keyHint=(GTextField)Find(GRoot.inst,"CheatKeyHint");Check(keyHint.text=="[H] 접기·펼치기   [O] 모든 치트 끄기·켜기");Check(keyHint.visible);Check(keyHint.parent==Find(GRoot.inst,"CheatTitleDrag"));Check(keyHint.textFormat.size==15);Check(keyHint.y>=Find(GRoot.inst,"CheatMinimize").y+Find(GRoot.inst,"CheatMinimize").height&&keyHint.y+20<=67);Check(Find(GRoot.inst,"CheatTitleDrag").height==68);Check(Find(GRoot.inst,"CheatTitleDrag").width==GRoot.inst.Children.Single().width);
+Check(Find(GRoot.inst,"CheatViewport").y>=68);Check(GRoot.inst.Children.Single().height==Find(GRoot.inst,"CheatViewport").height+80);
 bool duplicate=false;try{Host.Register(new TestPanel("speed",30,20));}catch(InvalidOperationException){duplicate=true;}Check(duplicate);
 GRoot.inst.focus=speed.Container; Check((bool)Call("Capture")! ==false);
 contribution.Enable=false; host.OnUpdate(); Check(GRoot.inst.focus==speed.Container);
@@ -54,8 +54,8 @@ Check(future.Container!=null);Check(Find(GRoot.inst,"CheatScrollbar").visible);
 var drag=Find(GRoot.inst,"CheatTitleDrag");drag.onTouchBegin.Fire(10,10);drag.onTouchMove.Fire(250,80);drag.onTouchEnd.Fire();
 var moved=GRoot.inst.Children.Single();Check(moved.x>12);float movedX=moved.x;
 Find(GRoot.inst,"CheatMinimize").onClick.Fire();host.OnUpdate();
-Check(!speed.Container!.visible&&!future.Container!.visible);Check(moved.height==48);Check(!((GTextField)Find(GRoot.inst,"CheatKeyHint")).visible);Check(Find(GRoot.inst,"CheatTitleDrag").height==48);Check((bool)Call("Capture")! ==false);
-Call("ResetSession");Load();host.OnUpdate();Check(GRoot.inst.Children.Single().height==48);Check(GRoot.inst.Children.Single().x==movedX);
+Check(!speed.Container!.visible&&!future.Container!.visible);Check(moved.height==68);Check(((GTextField)Find(GRoot.inst,"CheatKeyHint")).visible);Check(Find(GRoot.inst,"CheatTitleDrag").height==68);Check((bool)Call("Capture")! ==false);
+Call("ResetSession");Load();host.OnUpdate();Check(GRoot.inst.Children.Single().height==68);Check(GRoot.inst.Children.Single().x==movedX);
 Find(GRoot.inst,"CheatMinimize").onClick.Fire();host.OnUpdate();
 Check(speed.Container!.visible&&future.Container!.visible);
 var bar=Find(GRoot.inst,"CheatScrollbar");bar.onTouchBegin.Fire();bar.onTouchMove.Fire(0,10000);bar.onTouchEnd.Fire();
@@ -76,14 +76,14 @@ var scene=Il2CppCore.SceneSystem.SceneManager.Instance;
 var player=Host.Player!;
 GRoot.inst.focus=speed.Container;
 scene.IsInHarborScene=false;scene.IsInOceanScene=true;player.PlayerPort.IsStayInPort=false;
-host.OnUpdate();Check(GRoot.inst.Children.Single().height>48);Check(GRoot.inst.focus==null);
+host.OnUpdate();Check(GRoot.inst.Children.Single().height>68);Check(GRoot.inst.focus==null);
 Check(speed.Container!.visible);
 host.OnUpdate();Check(speed.Container.visible); // Tab/pause do not change location.
 scene.IsInLoadingOrStarting=true;host.OnUpdate();
 scene.IsInLoadingOrStarting=false;scene.IsInHarborScene=true;scene.IsInOceanScene=false;player.PlayerPort.IsStayInPort=true;
-host.OnUpdate();Check(GRoot.inst.Children.Single().height>48);
+host.OnUpdate();Check(GRoot.inst.Children.Single().height>68);
 Check(speed.Container.visible);
-player.PlayerPort.StayInPortId=2;host.OnUpdate();Check(GRoot.inst.Children.Single().height>48);
+player.PlayerPort.StayInPortId=2;host.OnUpdate();Check(GRoot.inst.Children.Single().height>68);
 Find(GRoot.inst,"CheatMinimize").onClick.Fire();host.OnUpdate();Check(!speed.Container.visible);
 player.PlayerPort.StayInPortId=3;host.OnUpdate();Check(!speed.Container.visible);
 var keyboard=UnityEngine.InputSystem.Keyboard.current!;
