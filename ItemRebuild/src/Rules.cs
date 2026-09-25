@@ -41,7 +41,11 @@ internal static class Rules
     // deletes the item and records PlayerLaneDB.UnlockPrefabLane. Purchases are auto-used; shops
     // hide/refuse a chart whose lane is unlocked. 12007/12039-12042 excluded (possible quest items).
     // Purchasable route charts. 0.1.21: no longer auto-used; only hidden/refused in shops once held or unlocked.
-    internal static bool AutoRoute(int id) => id is >= 130001 and <= 130056;
+    // 0.1.24 (user rule 2026-09-25 "no hardcoding", decision 2026-09-26): a route chart is any item that a PrefabLane row's
+    // lineMap points to, read from the game table at run time (EntryPoint.LaneOf) — no fixed 130001-130056 range, so charts
+    // added by City Editor (core newRow) are covered. 12007/12039-12042 now count too; none of them is in any shop
+    // (all PropStore/College/Guild rows checked 2026-09-25), so shop behaviour for original items is unchanged.
+    internal static bool AutoRoute(int id) => id != 0 && EntryPoint.LaneOf(id) > 0;
     internal static bool UnlockItem(int id) => CabinUnlock(id) || AutoRoute(id);
     internal static int Add(int current, int added)
     {

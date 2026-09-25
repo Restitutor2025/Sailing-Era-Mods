@@ -11,7 +11,7 @@ using Il2CppClient.UILogic.UIBag;
 using Il2CppFairyGUI;
 using IList = Il2CppSystem.Collections.Generic.List<Il2CppClient.PlayerStore.PlayerItemData>;
 
-[assembly: MelonInfo(typeof(Restitutor.ItemRebuild.EntryPoint), "Restitutor Additional Item Rebuild", "0.1.23", "Restitutor")]
+[assembly: MelonInfo(typeof(Restitutor.ItemRebuild.EntryPoint), "Restitutor Additional Item Rebuild", "0.1.24", "Restitutor")]
 [assembly: MelonGame("bolingo", "SailingEra")]
 namespace Restitutor.ItemRebuild;
 
@@ -73,7 +73,7 @@ public sealed partial class EntryPoint : MelonMod
             InstallSales(); InstallSupplySlider(); InstallUnlockItems();
             enabled = true;
         }))
-            log.Msg("Item Rebuild 0.1.23 ready (Restitutor.Core " + CoreInfo.Version + "; hook registration only, behaviour as 0.1.22 (sale tooltip follows grouped rows, single units toggle without popup, sale list position restored after popup): consumable/skill-book/language-book stacks, equipment display groups (weapon/armor/tool/clothes), sale quantity slider, hidden cabin blueprints, owned cabin blueprints and held/unlocked route charts hidden from shops.");
+            log.Msg("Item Rebuild 0.1.24 ready (route charts found from PrefabLane.lineMap, no fixed id range; Restitutor.Core " + CoreInfo.Version + "; hook registration only, behaviour as 0.1.22 (sale tooltip follows grouped rows, single units toggle without popup, sale list position restored after popup): consumable/skill-book/language-book stacks, equipment display groups (weapon/armor/tool/clothes), sale quantity slider, hidden cabin blueprints, owned cabin blueprints and held/unlocked route charts hidden from shops.");
     }
     // Declared-only, name must be unique (as 0.1.22). UIManager targets are refused by Core until the
     // game is ready; the only one (ShowInputNumPromptBox) is installed lazily during play.

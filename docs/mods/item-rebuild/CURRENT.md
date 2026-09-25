@@ -1,3 +1,8 @@
+# Item Rebuild — 0.1.24 (항로도 = PrefabLane.lineMap, 고정 번호 없음, 게임 확인 전)
+[0.1.24](0.1.24.md). 새 항로도(City Editor)도 보유·해금 시 상점 숨김·구매 거부. 12007·12039~12042 도 항로도로 취급(가방 용량 제외). 필요: `UserLibs\Restitutor.Core.dll` 0.1.0 이상.
+
+이전 기록:
+
 # Item Rebuild — 0.1.23 (Restitutor.Core 전환, 기능 변경 없음, 게임 확인 전)
 [0.1.23](0.1.23.md). 필요: `UserLibs\Restitutor.Core.dll` 0.1.0 이상.
 

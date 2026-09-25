@@ -10,10 +10,21 @@ public sealed partial class EntryPoint
  static void UnlockItemTests()
  {
   foreach(int id in Enumerable.Range(11000,11).Concat(new[]{11036,11037}))
-   Check(Rules.CabinUnlock(id)&&Rules.UnlockItem(id)&&!Rules.AutoRoute(id)&&!Rules.Stack(id)&&!Rules.GroupedRecord(id),"13 cabin unlock items");
+   Check(Rules.CabinUnlock(id)&&Rules.UnlockItem(id)&&!Rules.Stack(id)&&!Rules.GroupedRecord(id),"13 cabin unlock items");
   foreach(int id in new[]{11011,11021,11030,11035,11038,10032})Check(!Rules.CabinUnlock(id),"other ship-drawing items unchanged (user scope)");
-  foreach(int id in Enumerable.Range(130001,56))Check(Rules.AutoRoute(id)&&!Rules.CabinUnlock(id),"56 purchasable route charts");
-  foreach(int id in new[]{12007,12039,12040,12041,12042,130057,130000})Check(!Rules.AutoRoute(id)&&!Rules.UnlockItem(id),"quest-related charts excluded");
+  // 0.1.24: route charts come from PrefabLane.lineMap (table), not a fixed id range.
+  TemplateManager.PrefabLaneValues.Clear();
+  TemplateManager.PrefabLaneValues.AddRange(new[]{new PrefabLane{tid=1,lineMap=130001},new PrefabLane{tid=61,lineMap=12039},new PrefabLane{tid=1006,lineMap=1314030},new PrefabLane{tid=1000,lineMap=0}});
+  laneByItem=null;laneMapFailed=false;
+  foreach(int id in new[]{130001,12039,1314030})Check(Rules.AutoRoute(id)&&Rules.UnlockItem(id)&&!Rules.CabinUnlock(id),"route chart = item a PrefabLane.lineMap points to (incl. editor-added)");
+  foreach(int id in new[]{130002,130057,0,11005})Check(!Rules.AutoRoute(id),"not linked by any lane -> not a route chart");
+  Check(LaneOf(1314030)==1006&&LaneOf(0)==0,"lane lookup by item; lineMap 0 ignored");
+  foreach(int id in Enumerable.Range(11000,11).Concat(new[]{11036,11037}))Check(!Rules.AutoRoute(id),"cabin items are not route charts");
+  TemplateManager.PrefabLaneValues.Clear();laneByItem=null;
+  Check(!Rules.AutoRoute(130001)&&laneByItem==null,"empty lane table (templates not loaded yet) is not cached");
+  TemplateManager.PrefabLaneValues.Add(new PrefabLane{tid=1,lineMap=130001});
+  Check(Rules.AutoRoute(130001)&&LaneOf(130001)==1,"lanes read once the table is filled");
+  TemplateManager.PrefabLaneValues.Clear();laneByItem=null;
 
   // Bag: held blueprint row hidden, record kept, no logical capacity.
   var blueprint=Item(11005,1,61001);var tool=Item(31000,1,61002);var other=Item(30000,1,61003);
@@ -41,7 +52,7 @@ public sealed partial class EntryPoint
   HideOwnedGoods(store);
   Check(m.listPropStore.Select(x=>x.id).SequenceEqual(new[]{11006,30000}),"held blueprint hidden, others stay");
   Check(m.listCollege.Select(x=>x.id).SequenceEqual(new[]{130002}),"unlocked and held route charts hidden");
-  Check(m.listBlackMarket.Count==0&&m.listGuild.Count==1,"every shop type filtered; excluded chart untouched");
+  Check(m.listBlackMarket.Count==0&&m.listGuild.Count==1,"every shop type filtered; chart neither held nor unlocked stays");
 
   // Purchase guard: owned or duplicate unlock items are deselected before native writes.
   m.curShopType=1;m.listPropStore.Clear();

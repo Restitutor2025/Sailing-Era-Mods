@@ -9,6 +9,7 @@ namespace Restitutor.ItemRebuild;
 // 0.1.19 (user decisions 2026-09-21, handoff/UNLOCK_ITEMS_DESIGN.md):
 //  - Cabin blueprints + cabin expansion (Rules.CabinUnlock): held = unlocked. Hidden in the bag,
 //    no logical capacity, hidden from shops and refused at purchase while one is held.
+// 0.1.24: route charts = items that PrefabLane.lineMap points to (table lookup, no fixed range — Rules.AutoRoute).
 // 0.1.21 (user decision 2026-09-21): route charts 130001-130056 (Rules.AutoRoute) are NOT used
 //    automatically any more. 0.1.19 auto-use and the 0.1.20 open-line view/knowledge record/backfill
 //    are removed: 0.1.20 opened UIOpenLineCtrl over the shop during Exchange and the shop view and
@@ -34,7 +35,7 @@ public sealed partial class EntryPoint
         return n;
     }
     // Native UseSailLineDrawing scans TemplateManager.PrefabLaneValues for lane.lineMap == item id.
-    static int LaneOf(int itemId)
+    internal static int LaneOf(int itemId)
     {
         if(laneByItem==null&&!laneMapFailed)
         {
@@ -42,10 +43,10 @@ public sealed partial class EntryPoint
             {
                 var map=new Dictionary<int,int>();
                 foreach(var lane in TemplateManager.PrefabLaneValues)
-                    if(lane!=null&&Rules.AutoRoute(lane.lineMap)&&!map.TryAdd(lane.lineMap,lane.tid))
+                    if(lane!=null&&lane.lineMap!=0&&!map.TryAdd(lane.lineMap,lane.tid))
                         log.Msg($"Route chart {lane.lineMap} maps to several lanes; keeping lane {map[lane.lineMap]}.");
-                laneByItem=map;
-                log.Msg($"Route charts mapped to lanes: {map.Count}.");
+                // 0.1.24: every bag row now asks (Capacity), so an empty table (read before templates load) is not cached.
+                if(map.Count>0) { laneByItem=map; log.Msg($"Route charts mapped to lanes: {map.Count}."); }
             }
             catch(Exception ex) { laneMapFailed=true; log.Error("Route lane map unavailable; route charts keep native behavior: "+ex); }
         }
