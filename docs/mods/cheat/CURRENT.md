@@ -1,3 +1,7 @@
+# Cheats Speed 1.2.0 — FileVersion 1.2.0 재빌드 (2026-09-25)
+
+코드 그대로, csproj Version 1.1.2 → 1.2.0 만 바꿔 다시 빌드. 버전 값 외 바이트 차이 없음 확인. 설치 SHA256 F32877D04C51BC92…, 사본 Cheats\releases\speed-1.2.0-fv\. 이전 = Cheats\releases\speed-1.2.0\ (D1EF6B0D…). 다음 Cheats 릴리스에 포함 예정.
+
 # Cheats Skill 1.1.1 — Rebalance Growth 가 실제 동작할 때만 추가 지급 양보
 
 게임 확인 전. Rebalance Growth 0.3.0 과 함께 배포. [상세](skill-1.1.1.md)

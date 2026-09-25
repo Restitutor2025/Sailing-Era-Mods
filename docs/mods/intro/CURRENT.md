@@ -1,3 +1,7 @@
+# Intro 0.1.4 — FileVersion 0.1.4 재빌드 (2026-09-25)
+
+0.1.4 코드 그대로, csproj Version 0.1.3 → 0.1.4 만 바꿔 다시 빌드(이전 설치본은 파일 버전이 0.1.3 으로 찍혔음). 버전 값 외 바이트 차이 없음 확인(빌드 식별값 제외). 설치: Mods\Additional_Functions\Restitutor_Additional_IntroSkip.dll SHA256 F5F53A4C1599AFA7…, 사본 releases\intro\0.1.4\. 이전 0.1.4 = archive-intro\0.1.4\ (1043F4B0…). 설치 기록·기능 설명은 [0.1.4](0.1.4.md). Base v1.1.0 에 포함.
+
 # 시작 화면 모드 현재 상태 — 0.1.3
 DLL: Restitutor_fixes.dll (설치 이름 Restitutor_Additional_IntroSkip.dll). Restitutor.Core 0.1.0 필요, 게임 확인 전. [0.1.3 Core 전환](0.1.3.md) · [0.1.2 버전 근거](0.1.2.md) · [정확한 패치 4개](PATCHES.md) · [원본](../../../analysis/systems/STARTUP.md).
 ## 변경 계약
