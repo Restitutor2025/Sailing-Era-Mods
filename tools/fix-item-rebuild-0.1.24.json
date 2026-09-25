@@ -1,0 +1,10 @@
+{"name":"fix-item-rebuild-0.1.24","branch":"fix/item-rebuild-route-charts-table",
+ "desc":"Item Rebuild 0.1.24: route charts found from PrefabLane.lineMap (no fixed 130001-130056 range), so City Editor route charts are covered.",
+ "rollback":"copy ItemRebuild\\releases\\0.1.23\\Restitutor_Additional_Item_Rebuild.dll to Mods\\Additional_Functions",
+ "core_ok":["36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E"],
+ "session":"https://claude.ai/code/session_01FHxwsmEuyhzMFjyfBxasfj",
+ "installs":[
+  ["ItemRebuild\\releases\\0.1.24\\Restitutor_Additional_Item_Rebuild.dll","Mods\\Additional_Functions\\Restitutor_Additional_Item_Rebuild.dll","0A5E80E4DB9A79A46DC9B2C50F91197AE550196E09289178E38B8BCDEDA43E0E"]],
+ "commits":[
+  [["ItemRebuild","docs/mods/item-rebuild"],"fix(item-rebuild): route charts from PrefabLane.lineMap (0.1.24)","Rules.AutoRoute no longer uses the fixed 130001-130056 range: a route chart is any item a PrefabLane row's lineMap points to (EntryPoint.LaneOf, read from the game table). Charts added by City Editor (core newRow) get the same shop hiding/refusal and capacity exclusion. 12007/12039-12042 now count as route charts too (sold nowhere; excluded from logical bag capacity). An empty lane table is not cached. Hooks unchanged. PASS 5636."],
+  [["tools/fix-item-rebuild-0.1.24.json","tools/one-shots/fix-item-rebuild-0.1.24.ps1","tools/one-shots/fix-item-rebuild-0.1.24.bat"],"chore: one-shot for Item Rebuild 0.1.24",""]]}
