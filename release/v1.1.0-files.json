@@ -1,0 +1,99 @@
+{
+ "note": "Base v1.1.0 release (2026-09-25). DLL: [repo source, zip path, SHA256, name, version]. Rebalance/Cheats/Scenario: not released yet (user 2026-09-25).",
+ "bundles": {
+  "base": {
+   "tag": "base-v1.1.0",
+   "title": "Restitutor Base v1.1.0",
+   "zip": "Restitutor-Base-v1.1.0.zip",
+   "notes": "release/RELEASE_NOTES-base-v1.1.0.md",
+   "dlls": [
+    [
+     "Core\\releases\\0.2.0\\Restitutor.Core.dll",
+     "UserLibs\\Restitutor.Core.dll",
+     "36B96E0839E969CB36607A11A631917DDFCE3B6B08F756948FFA8DFEAE0EFA5E",
+     "Restitutor.Core",
+     "0.2.0"
+    ],
+    [
+     "Contribution\\releases\\0.5.7\\Restitutor_fixes_Contribution.dll",
+     "Mods\\Additional_Functions\\Restitutor_Additional_Contribution_Goods_Recognition.dll",
+     "3DD26315F1DBDCAA48F20BC9E69FBFDAE4D8609C56A718095196BD841BD94F43",
+     "Contribution",
+     "0.5.7"
+    ],
+    [
+     "InstantEntrance\\releases\\0.1.1\\Restitutor_fixes_Instant_Entrance.dll",
+     "Mods\\Additional_Functions\\Restitutor_Additional_Entrance.dll",
+     "431F5B1AC88835BC479F565B22148B02BB581E31E068C4E56F14E3DE647096E1",
+     "Instant Entrance",
+     "0.1.1"
+    ],
+    [
+     "releases\\intro\\0.1.4\\Restitutor_fixes.dll",
+     "Mods\\Additional_Functions\\Restitutor_Additional_IntroSkip.dll",
+     "F5F53A4C1599AFA720BC30318D7435B94CF1BE2E92EEBA07CC89A515CAC5B054",
+     "Intro Skip",
+     "0.1.4"
+    ],
+    [
+     "ItemRebuild\\releases\\0.1.23\\Restitutor_Additional_Item_Rebuild.dll",
+     "Mods\\Additional_Functions\\Restitutor_Additional_Item_Rebuild.dll",
+     "7766E3DAF8E859558BA717AE8AE292571CA13A33D8C6E505F461E198F0787BCD",
+     "Item Rebuild",
+     "0.1.23"
+    ],
+    [
+     "StatRank\\releases\\0.2.2\\Restitutor_Additional_Stat_Rank.dll",
+     "Mods\\Additional_Functions\\Restitutor_Additional_Stat_Rank.dll",
+     "DB07BE50E38611B39A390459661BC8F2BAB371F5F30C38E4355AFF1335E1D4C1",
+     "Stat Rank",
+     "0.2.2"
+    ],
+    [
+     "TabCharacters\\releases\\0.6.12\\Restitutor_Additional_Tab_Characters.dll",
+     "Mods\\Additional_Functions\\Restitutor_Additional_Tab_Characters.dll",
+     "0F9C4A6DD38EA19CA495B1FE9676B8FDC9A19F13374403994F2140DD7B1CF411",
+     "Tab Characters",
+     "0.6.12"
+    ],
+    [
+     "TextSpeed\\releases\\0.1.6\\Restitutor_fixes_textspeed.dll",
+     "Mods\\Additional_Functions\\Restitutor_Additional_Textspeed.dll",
+     "3AEF807822EAFF01C1799AE65CD44B71B95A7339C757D263A0A1AA530F7010B6",
+     "Text Speed",
+     "0.1.6"
+    ],
+    [
+     "CTRLInstant\\releases\\0.1.7\\Restitutor_BugFixes_CTRL_Instant.dll",
+     "Mods\\Bug_Fixes\\Restitutor_BugFixes_CTRL_Instant.dll",
+     "66D038C7590D8E364B8D89E0C267E5A927D6B992A050267CF943365EF6023D31",
+     "CTRL Instant",
+     "0.1.7"
+    ],
+    [
+     "FleetInfo\\releases\\0.1.0\\Restitutor_fixes_Fleet_Info.dll",
+     "Mods\\Bug_Fixes\\Restitutor_fixes_Fleet_Info.dll",
+     "41FDB700E43C61C14FC68610A05B8E901C017586990F6A6851E655CFACE1BE48",
+     "Fleet Info",
+     "0.1.0"
+    ],
+    [
+     "Map\\candidates\\tab-only\\dist\\0.2.6\\Restitutor_fixes_map.dll",
+     "Mods\\Bug_Fixes\\Restitutor_fixes_map.dll",
+     "9979A2AA1FC5CA3326934C3B6A15C53C2A9773612F1E99C0DD764BD1DFA45E53",
+     "Map",
+     "0.2.6"
+    ],
+    [
+     "RebalanceSaveSlots\\releases\\0.2.5\\Restitutor_Rebalance_SaveSlots.dll",
+     "Mods\\Rebalance\\Restitutor_Rebalance_SaveSlots.dll",
+     "4EB8556843DD1E396AABB33BAE16C389EAA3A510CCBD946583E832E8EA7678E3",
+     "SaveSlots",
+     "0.2.5"
+    ]
+   ],
+   "core": false,
+   "data": []
+  }
+ }
+}
