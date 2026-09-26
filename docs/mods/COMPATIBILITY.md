@@ -495,3 +495,14 @@ UICreateRoleView.Refresh/ShowHook 추가Postfix, UIContent.visible 공유 및 �
 
 ## Core 0.7.7 이름 PNG
 자체 모달 이름 이미지만 기존 소유 텍스처 목록에 추가. 원본 리소스 파일·후크·입력 무변경. 병용 실전 확인 전. [근거](city-editor-core/0.7.7.md).
+
+## Core0.13.0 / Roman Revival 정의 DLC0.1.0
+TemplateUtils.InitTemplateData Prefix(Priority.First)에서 Culture/Country/문구 신규행 및 가격·문화거리 배열을 검증 후 반영. TableApply·다른 문화/가격 모드·해당 초기화 후크와 접점. 이탈리아 기준 복제이며 기존27칸 보존; 배열 expected 불일치는 거부. 입력/세이브 후크 없음. 병용 실전 미확인. [계약](roman-revival/PATCHES.md) · [배포](roman-revival/0.1.0.md).
+
+## City Editor 대체 도시 설정 작성 기능 1
+
+2026-09-26: 대체 도시 설정은 editorState에만 저장하며 Core가 실행하는 ops에 포함하지 않는다. 에디터 문서/모달 입력만 변경, 새 게임 후크·공유 런타임 상태·세이브 쓰기 없음. 설치 Core0.13.0 및 DLC0.1.0 유지. 이벤트 후 전환은 미구현. [계약](roman-revival/PATCHES.md) · [검증/설치 상태](roman-revival/EDITOR-VARIANTS-1.md).
+
+## CityEditor Core0.14.0 도시 개발 단계
+
+기존/신규 도시의 선택적 시설 개방 및 NPC 출생/목적지 정책. 저장 FBVersionSet 벡터 전용 확장, 원본 Deserialize 앞뒤 분리/복구, 살아 있는 VersionSet 불변. 시설 목록/dirty, NPC BornPorts 호출 중 교체, 행동 후보 배열과 항구 화면 갱신 접점. NavDiag의 도착/출발 함수는 취소하지 않는다. 24후크 메타데이터 단일 RVA/본문 대조와 오프라인 검사는 실전 충돌 없음의 증명이 아니다. [계약](city-development/PATCHES.md).
